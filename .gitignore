@@ -127,3 +127,15 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# VTK files
+*.vti
+*.vtr
+*.vtp
+*.vtu
+*.vts
+*.pvti
+*.pvtr
+*.pvtp
+*.pvtu
+*.pvts
