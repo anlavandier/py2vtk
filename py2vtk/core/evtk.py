@@ -55,22 +55,20 @@ import numpy as np
 
 from base64 import b64encode
 
-# Optional packages
-try:
-    import lzma
-except ImportError:
-    lzma = None
-try:
-    import lz4
-except ImportError:
-    lz4 = None
 
+# Optional package LZMA for compression
+try:
+    from lzma import compress as lzma_c
+    def lzma_compress(data, level):
+        level = None if level == -1 else level
+        return lzma_c(data, preset=level)
+except ImportError as e:
+    def lzma_compress(data, level): 
+        raise e
 
 compressor_dict = {
-    'zlib': zlib,
-    None: zlib,
-    'lzma': lzma,
-    'lz4': lz4
+    'zlib': zlib.compress,
+    'lzma': lzma_compress,
 }
 
 # Map numpy dtype to struct format
@@ -94,7 +92,7 @@ def _get_byte_order_char():
         return "<"
     return ">"
 
-def compress(array, level, compressor):
+def compress(array, level, compress_func):
     """
     Compress an array with a compressor. Taken from uvw, https://github.com/prs513rosewood/uvw
     """
@@ -108,11 +106,11 @@ def compress(array, level, compressor):
     last_block_size = data_size % max_block_size
 
     # Compress first n_blocks - 1  blocks of size max_block_size
-    compressed_data = [zlib.compress(raw_array[i* max_block_size + (i + 1) * max_block_size], level)
+    compressed_data = [compress_func(raw_array[i* max_block_size + (i + 1) * max_block_size], level)
                         for i in range(n_blocks - 1)]
 
     # Compress last block of size last_block_size
-    compressed_data.append(zlib.compress(raw_array[-last_block_size:], level=level))
+    compressed_data.append(compress_func(raw_array[-last_block_size:], level=level))
 
     # Header data (cf https://vtk.org/Wiki/VTK_XML_Formats#Compressed_Data)
     header_dtype = np.dtype(_get_byte_order_char() + 'u8')
@@ -123,7 +121,7 @@ def compress(array, level, compressor):
 
     return header.tobytes(), b"".join(compressed_data)
 
-def encodeData(data, format, level=0):
+def encodeData(data, format, level=0, compressor='zlib'):
     """
     Encodes a single numpy ndarray of a 3-tuple of arrays
     using a specific and a compression level if relevant.
@@ -221,18 +219,20 @@ def encodeData(data, format, level=0):
         return  0, stream.getvalue().encode()
 
     elif format == 'binary':
+        compress_func = compressor_dict[compressor]
+
         if is_vector_comp:
             if level == 0:
                 header = np.array(xxyyzz.nbytes, dtype=np.dtype(xxyyzz.dtype.byteorder + 'u8'))
                 formatted_data = memoryview(xxyyzz)
             else:
-                header, formatted_data = compress(xxyyzz, level)
+                header, formatted_data = compress(xxyyzz, level, compress_func)
         else:
             if level == 0:
                 header = np.array(xx.nbytes, dtype=np.dtype(xx.dtype.byteorder + 'u8'))
                 formatted_data = memoryview(xx)
             else:
-                header, formatted_data = compress(xx, level)
+                header, formatted_data = compress(xx, level, compress_func)
  
         encoded_data = b64encode(header) 
         encoded_data += b64encode(formatted_data)

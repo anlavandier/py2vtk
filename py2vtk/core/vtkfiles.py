@@ -257,9 +257,13 @@ class VtkFile:
         format of the appended data.
     
     compression : bool or int, default=False
-        Whether and how much to compress the binary data. 
+        Whether and how much to compress the binary data.
+    
+    compressor : str in {'zlib', 'lzma'}, default='zlib'
+        compressor to use to compress binary data.
     """
-    def __init__(self, filepath, ftype, direct_format="ascii", appended_format="raw", compression=False):
+    def __init__(self, filepath, ftype, direct_format="ascii", appended_format="raw", compression=False,
+                 compressor='zlib'):
         self.ftype = ftype
         self.filename = filepath + ftype.ext
         self.xml = XmlWriter(self.filename)
@@ -271,7 +275,17 @@ class VtkFile:
         assert appended_format in ["binary", "raw"]
         self.appended_format = appended_format
         self.data_to_append = []
-        
+
+        self.appendedDataIsOpen = False
+        self.isOpen = True
+
+        self.xml.openElement("VTKFile").addAttributes(
+            type=ftype.name,
+            version="1.0",
+            byte_order=_get_byte_order(),
+            header_type="UInt64",
+        )
+
         if not compression:
             self.compression = 0
         elif compression is True:
@@ -281,20 +295,17 @@ class VtkFile:
         else:
             raise ValueError("compression can only be True, False, or an"
                              "integer between -1 and 9 included")
-
-        self.appendedDataIsOpen = False
-
-        self.xml.openElement("VTKFile").addAttributes(
-            type=ftype.name,
-            version="1.0",
-            byte_order=_get_byte_order(),
-            header_type="UInt64",
-        )
-        if self.compression != 0:
-            # ToDo, workout lz4 and lzma cases
-            self.xml.addAttributes(compressor='vtkZLibDataCompressor')
-
         
+        if self.compression != 0:
+            if compressor == 'zlib':
+                self.xml.addAttributes(compressor='vtkZLibDataCompressor')
+            elif compressor == 'lzma':
+                self.xml.addAttributes(compressor='vtkLZMADataCompressor')
+            else:
+                raise ValueError("Invalid compressor name")
+
+        self.compressor = compressor
+
 
     def getFileName(self):
         """Return absolute path to this file."""
@@ -513,12 +524,16 @@ class VtkFile:
                 NumberOfTuples=nelem,
                 format=self.direct_format,
             )
-            _, encoded_data = encodeData(data, self.direct_format, level=self.compression)
+            _, encoded_data = encodeData(data, self.direct_format, 
+                                         level=self.compression, 
+                                         compressor=self.compressor)
 
             self.xml.stream.write(encoded_data)
             self.closeElement("DataArray")
         else:
-            size, encoded_data = encodeData(data, self.appended_format, level=self.compression)
+            size, encoded_data = encodeData(data, self.appended_format, 
+                                            level=self.compression, 
+                                            compressor=self.compressor)
             self.xml.addAttributes(
                 Name=name,
                 type=dtype.name,
@@ -531,7 +546,7 @@ class VtkFile:
             self.offset += size
             self.data_to_append.append(encoded_data)
 
-    def appendData(self):
+    def _appendData(self):
         """
         Append data to binary section.
         This function writes the header section
@@ -546,12 +561,12 @@ class VtkFile:
             The order of the arrays must coincide with
             the numbering scheme of the grid.
         """
-        self.openAppendedData()
+        self._openAppendedData()
         for i in range(len(self.data_to_append)):
             data_to_append = self.data_to_append.pop(0)
             self.xml.stream.write(data_to_append)
 
-    def openAppendedData(self):
+    def _openAppendedData(self):
         """
         Open binary section.
         It is not necessary to explicitly call this function
@@ -590,10 +605,15 @@ class VtkFile:
     def save(self):
         """Close file."""
         if self.data_to_append != []:
-            self.appendData()
+            self._appendData()
             self._closeAppendedData()
         self.xml.closeElement("VTKFile")
         self.xml.close()
+        self.isOpen = False
+
+    def __del__(self):
+        if self.isOpen:
+            self.save()
 
 
 # ================================
@@ -622,6 +642,8 @@ class VtkParallelFile:
             byte_order=_get_byte_order(),
             header_type="UInt64",
         )
+        self.isOpen = True
+
 
     def getFileName(self):
         """Return absolute path to this file."""
@@ -629,9 +651,9 @@ class VtkParallelFile:
 
     def addPiece(
         self,
+        source=None,
         start=None,
         end=None,
-        source=None,
     ):
         """
         Add piece section with extent and source.
@@ -787,9 +809,10 @@ class VtkParallelFile:
         """
         self.xml.closeElement(self.ftype.name)
 
-    def addHeader(self, name, dtype, ncomp):
+    def addData(self, name, dtype, ncomp):
         """
-        Add data array description to xml header section.
+        Add data array to the parallel vtk file.
+
         Parameters
         ----------
         name : str
@@ -802,10 +825,7 @@ class VtkParallelFile:
         -------
         VtkFile
             This VtkFile to allow chained calls.
-        Notes
-        -----
-        This is a low level function.
-        Use addData if you want to add a numpy array.
+
         """
         dtype = np_to_vtk[dtype.name]
 
@@ -831,3 +851,8 @@ class VtkParallelFile:
         """Close file."""
         self.xml.closeElement("VTKFile")
         self.xml.close()
+        self.isOpen = False
+
+    def __del__(self):
+        if self.isOpen:
+            self.save()

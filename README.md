@@ -1,5 +1,5 @@
 # Py2VTK
-Py2VTK is a lightweight module for exporting VTK files using Python for visualization/analysis in softwares like Paraview, VisIt or Mayavi.
+Py2VTK is a Low dependency module for exporting VTK files using Python for visualization/analysis in softwares like Paraview, VisIt or Mayavi.
 
 ## Acknowledgments
 Py2vtk borrows heavily from PyEvtk as it could be considered a fork. Recreation of its high-level API is planned. Py2vtk also borrows from UVW.
