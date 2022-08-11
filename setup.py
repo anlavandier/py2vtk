@@ -1,23 +1,25 @@
 import os
-import versioneer 
 
 from setuptools import setup
 
+import versioneer
+
 packages = [
-    'py2vtk',
-    'py2vtk.api',
-    'py2vtk.core',
-    'py2vtk.parallel',
-    'py2vtk.dask'
+    "py2vtk",
+    "py2vtk.api",
+    "py2vtk.core",
+    # 'py2vtk.parallel',
+    # 'py2vtk.dask',
 ]
 
-tests = ['tests']
+tests = ["tests"]
 
 install_requires = [
-    'numpy',
+    "numpy",
 ]
 extras_require = {
     "tests": ["pytest", "vtk", "mpi4py"],
+    "mpi": ["mpi4py"],
 }
 
 setup(
@@ -31,7 +33,7 @@ setup(
     license="MIT",
     keywords="Visualization VTK",
     packages=packages + tests,
-    long_description=open("README.md").read() if os.exists("README.md") else "",
+    long_description=open("README.md").read() if os.path.exists("README.md") else "",
     python_requires=">=3.7",
     install_requires=install_requires,
     extras_require=extras_require,
