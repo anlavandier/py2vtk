@@ -26,29 +26,30 @@
 
 import numpy as np
 
+from ..core.vtkcells import (
+    Vtk_points_per_cell,
+    VtkLine,
+    VtkPixel,
+    VtkPolyLine,
+    VtkVertex,
+)
 from ..core.vtkfiles import (
     VtkFile,
-    VtkUnstructuredGrid,
     VtkImageData,
     VtkRectilinearGrid,
     VtkStructuredGrid,
+    VtkUnstructuredGrid,
 )
-
-from ..core.vtkcells import (
-    VtkVertex,
-    VtkLine,
-    VtkPolyLine,
-    VtkPixel,
-)
-
 from ..utilities.utils import _addDataToFile
 
-__all__ = ['imageToVTK',
-           'gridToVTK',
-           'pointsToVTK',
-           'linestoVTK',
-           'unstructuredGridToVTK',
-           'cylinderToVTK']
+__all__ = [
+    "imageToVTK",
+    "gridToVTK",
+    "pointsToVTK",
+    "linesToVTK",
+    "unstructuredGridToVTK",
+    "cylinderToVTK",
+]
 
 
 # ==============================================================================
@@ -60,10 +61,10 @@ def imageToVTK(
     cellData=None,
     pointData=None,
     fieldData=None,
-    direct_format='ascii',
-    appended_format='raw',
+    direct_format="ascii",
+    appended_format="raw",
     compression=False,
-    compressor='zlib',
+    compressor="zlib",
     append=True,
 ):
     """
@@ -111,14 +112,14 @@ def imageToVTK(
         If ``'ascii'``, the data will be human readable,
         if ``'binary'`` it will use base 64
         and can be compressed. See ``compressor`` argument.
-    
+
     appended_format : str in {'raw', 'binary'}, default='raw'
         how that appended data will be encoded.
         If ``'raw'``, raw binary data will be written to file.
         This is space efficient and supported by vtk but isn't
-        valid XML. If ``'binary'``, data will be encoded using base64 
+        valid XML. If ``'binary'``, data will be encoded using base64
         and can be compressed. See ``compressor`` argument.
-    
+
     compression : Bool or int, default=False
         compression level of the binary data.
         Can be ``True``, ``False`` or any integer in ``[-1, 9]`` included.
@@ -129,7 +130,7 @@ def imageToVTK(
         compression library to use for the binary data.
 
     append : bool, default=True
-        Whether to write the data in appended mode or not. 
+        Whether to write the data in appended mode or not.
 
     Returns
     -------
@@ -162,12 +163,14 @@ def imageToVTK(
         end = (end[0] - 1, end[1] - 1, end[2] - 1)
 
     # Write data to file
-    w = VtkFile(path, 
-                VtkImageData, 
-                direct_format=direct_format, 
-                appended_format=appended_format,
-                compression=compression,
-                compressor=compressor)
+    w = VtkFile(
+        path,
+        VtkImageData,
+        direct_format=direct_format,
+        appended_format=appended_format,
+        compression=compression,
+        compressor=compressor,
+    )
 
     w.openGrid(start=start, end=end, origin=origin, spacing=spacing)
     w.openPiece(start=start, end=end)
@@ -180,18 +183,18 @@ def imageToVTK(
 
 # ==============================================================================
 def gridToVTK(
-    path, 
-    x, 
-    y, 
+    path,
+    x,
+    y,
     z,
     start=(0, 0, 0),
     cellData=None,
     pointData=None,
     fieldData=None,
-    direct_format='ascii',
-    appended_format='raw',
+    direct_format="ascii",
+    appended_format="raw",
     compression=False,
-    compressor='zlib',
+    compressor="zlib",
     append=True,
 ):
     """
@@ -237,14 +240,14 @@ def gridToVTK(
         If ``'ascii'``, the data will be human readable,
         if ``'binary'`` it will use base 64
         and can be compressed. See ``compressor`` argument.
-    
+
     appended_format : str in {'raw', 'binary'}, default='raw'
         how that appended data will be encoded.
         If ``'raw'``, raw binary data will be written to file.
         This is space efficient and supported by vtk but isn't
-        valid XML. If ``'binary'``, data will be encoded using base64 
+        valid XML. If ``'binary'``, data will be encoded using base64
         and can be compressed. See ``compressor`` argument.
-    
+
     compression : Bool or int, default=False
         compression level of the binary data.
         Can be ``True``, ``False`` or any integer in ``[-1, 9]`` included.
@@ -255,7 +258,7 @@ def gridToVTK(
         compression library to use for the binary data.
 
     append : bool, default=True
-        Whether to write the data in appended mode or not. 
+        Whether to write the data in appended mode or not.
 
     Returns
     -------
@@ -296,12 +299,14 @@ def gridToVTK(
     end = (start[0] + nx, start[1] + ny, start[2] + nz)
 
     # Open File
-    w = VtkFile(path, 
-                ftype,
-                direct_format=direct_format, 
-                appended_format=appended_format,
-                compression=compression,
-                compressor=compressor)
+    w = VtkFile(
+        path,
+        ftype,
+        direct_format=direct_format,
+        appended_format=appended_format,
+        compression=compression,
+        compressor=compressor,
+    )
 
     # Open Grid part
     w.openGrid(start=start, end=end)
@@ -319,7 +324,7 @@ def gridToVTK(
         w.addData("points", (x, y, z), append=append)
         w.closeElement("Points")
 
-    # Add data 
+    # Add data
     _addDataToFile(w, cellData, pointData, fieldData, append=append)
 
     # Close Grid part
@@ -334,16 +339,16 @@ def gridToVTK(
 
 # ==============================================================================
 def pointsToVTK(
-    path, 
-    x,             
-    y, 
-    z, 
-    data=None, 
+    path,
+    x,
+    y,
+    z,
+    data=None,
     fieldData=None,
-    direct_format='ascii',
-    appended_format='raw',
+    direct_format="ascii",
+    appended_format="raw",
     compression=False,
-    compressor='zlib',
+    compressor="zlib",
     append=True,
 ):
     """
@@ -375,14 +380,14 @@ def pointsToVTK(
         If ``'ascii'``, the data will be human readable,
         if ``'binary'`` it will use base 64
         and can be compressed. See ``compressor`` argument.
-    
+
     appended_format : str in {'raw', 'binary'}, default='raw'
         how that appended data will be encoded.
         If ``'raw'``, raw binary data will be written to file.
         This is space efficient and supported by vtk but isn't
-        valid XML. If ``'binary'``, data will be encoded using base64 
+        valid XML. If ``'binary'``, data will be encoded using base64
         and can be compressed. See ``compressor`` argument.
-    
+
     compression : Bool or int, default=False
         compression level of the binary data.
         Can be ``True``, ``False`` or any integer in ``[-1, 9]`` included.
@@ -393,7 +398,7 @@ def pointsToVTK(
         compression library to use for the binary data.
 
     append : bool, default=True
-        Whether to write the data in appended mode or not. 
+        Whether to write the data in appended mode or not.
 
     Returns
     -------
@@ -415,12 +420,14 @@ def pointsToVTK(
 
     cell_types[:] = VtkVertex.tid
 
-    w = VtkFile(path, 
-                VtkUnstructuredGrid,
-                direct_format=direct_format, 
-                appended_format=appended_format,
-                compression=compression,
-                compressor=compressor)
+    w = VtkFile(
+        path,
+        VtkUnstructuredGrid,
+        direct_format=direct_format,
+        appended_format=appended_format,
+        compression=compression,
+        compressor=compressor,
+    )
 
     w.openGrid()
     w.openPiece(ncells=npoints, npoints=npoints)
@@ -445,17 +452,17 @@ def pointsToVTK(
 
 # ==============================================================================
 def linesToVTK(
-    path, 
-    x, 
-    y, 
-    z, 
-    cellData=None, 
-    pointData=None, 
+    path,
+    x,
+    y,
+    z,
+    cellData=None,
+    pointData=None,
     fieldData=None,
-    direct_format='ascii',
-    appended_format='raw',
+    direct_format="ascii",
+    appended_format="raw",
     compression=False,
-    compressor='zlib',
+    compressor="zlib",
     append=True,
 ):
     """
@@ -493,14 +500,14 @@ def linesToVTK(
         If ``'ascii'``, the data will be human readable,
         if ``'binary'`` it will use base 64
         and can be compressed. See ``compressor`` argument.
-    
+
     appended_format : str in {'raw', 'binary'}, default='raw'
         how that appended data will be encoded.
         If ``'raw'``, raw binary data will be written to file.
         This is space efficient and supported by vtk but isn't
-        valid XML. If ``'binary'``, data will be encoded using base64 
+        valid XML. If ``'binary'``, data will be encoded using base64
         and can be compressed. See ``compressor`` argument.
-    
+
     compression : Bool or int, default=False
         compression level of the binary data.
         Can be ``True``, ``False`` or any integer in ``[-1, 9]`` included.
@@ -511,7 +518,7 @@ def linesToVTK(
         compression library to use for the binary data.
 
     append : bool, default=True
-        Whether to write the data in appended mode or not. 
+        Whether to write the data in appended mode or not.
 
     Returns
     -------
@@ -542,12 +549,14 @@ def linesToVTK(
 
     cell_types[:] = VtkLine.tid
 
-    w = VtkFile(path, 
-                VtkUnstructuredGrid,
-                direct_format=direct_format, 
-                appended_format=appended_format,
-                compression=compression,
-                compressor=compressor)
+    w = VtkFile(
+        path,
+        VtkUnstructuredGrid,
+        direct_format=direct_format,
+        appended_format=appended_format,
+        compression=compression,
+        compressor=compressor,
+    )
     w.openGrid()
     w.openPiece(ncells=ncells, npoints=npoints)
 
@@ -560,7 +569,9 @@ def linesToVTK(
     w.addData("types", cell_types, append=append)
     w.closeElement("Cells")
 
-    _addDataToFile(w, cellData=cellData, pointData=pointData, fieldData=fieldData, append=append)
+    _addDataToFile(
+        w, cellData=cellData, pointData=pointData, fieldData=fieldData, append=append
+    )
 
     w.closePiece()
     w.closeGrid()
@@ -571,18 +582,18 @@ def linesToVTK(
 
 # ==============================================================================
 def polyLinesToVTK(
-    path, 
-    x, 
-    y, 
-    z, 
+    path,
+    x,
+    y,
+    z,
     pointsPerLine,
-    cellData=None, 
-    pointData=None, 
+    cellData=None,
+    pointData=None,
     fieldData=None,
-    direct_format='ascii',
-    appended_format='raw',
+    direct_format="ascii",
+    appended_format="raw",
     compression=False,
-    compressor='zlib',
+    compressor="zlib",
     append=True,
 ):
     """
@@ -624,14 +635,14 @@ def polyLinesToVTK(
         If ``'ascii'``, the data will be human readable,
         if ``'binary'`` it will use base 64
         and can be compressed. See ``compressor`` argument.
-    
+
     appended_format : str in {'raw', 'binary'}, default='raw'
         how that appended data will be encoded.
         If ``'raw'``, raw binary data will be written to file.
         This is space efficient and supported by vtk but isn't
-        valid XML. If ``'binary'``, data will be encoded using base64 
+        valid XML. If ``'binary'``, data will be encoded using base64
         and can be compressed. See ``compressor`` argument.
-    
+
     compression : Bool or int, default=False
         compression level of the binary data.
         Can be ``True``, ``False`` or any integer in ``[-1, 9]`` included.
@@ -643,7 +654,7 @@ def polyLinesToVTK(
 
     append : bool, default=True
         Whether to write the data in appended mode or not.
-    
+
     Returns
     -------
     str
@@ -667,12 +678,14 @@ def polyLinesToVTK(
     cell_types = np.empty(npoints, dtype="uint8")
     cell_types[:] = VtkPolyLine.tid
 
-    w = VtkFile(path, 
-                VtkUnstructuredGrid,
-                direct_format=direct_format, 
-                appended_format=appended_format,
-                compression=compression,
-                compressor=compressor)
+    w = VtkFile(
+        path,
+        VtkUnstructuredGrid,
+        direct_format=direct_format,
+        appended_format=appended_format,
+        compression=compression,
+        compressor=compressor,
+    )
 
     w.openGrid()
     w.openPiece(ncells=ncells, npoints=npoints)
@@ -686,7 +699,9 @@ def polyLinesToVTK(
     w.addData("types", cell_types, append=append)
     w.closeElement("Cells")
 
-    _addDataToFile(w, cellData=cellData, pointData=pointData, fieldData=fieldData, append=append)
+    _addDataToFile(
+        w, cellData=cellData, pointData=pointData, fieldData=fieldData, append=append
+    )
 
     w.closePiece()
     w.closeGrid()
@@ -707,11 +722,12 @@ def unstructuredGridToVTK(
     cellData=None,
     pointData=None,
     fieldData=None,
-    direct_format='ascii',
-    appended_format='raw',
+    direct_format="ascii",
+    appended_format="raw",
     compression=False,
-    compressor='zlib',
+    compressor="zlib",
     append=True,
+    check_cells=True,
 ):
     """
     Export unstructured grid and associated data.
@@ -741,7 +757,7 @@ def unstructuredGridToVTK(
         It should have length nelem,
         where nelem is the number of cells or elements in the grid.
 
-    cell_types : TYPE
+    cell_types : array_like
         1D array with an integer that defines the cell type of
         each element in the grid.
         It should have size nelem.
@@ -753,12 +769,12 @@ def unstructuredGridToVTK(
         dictionary with variables associated to each cell.
         Keys should be the names of the variable stored in each array.
         All arrays must have the same number of elements.
-    
+
     pointData : dict, optional
         dictionary with variables associated to each vertex.
         Keys should be the names of the variable stored in each array.
         All arrays must have the same number of elements.
-    
+
     fieldData : dict, optional
         dictionary with variables associated with the field.
         Keys should be the names of the variable stored in each array.
@@ -768,14 +784,14 @@ def unstructuredGridToVTK(
         If ``'ascii'``, the data will be human readable,
         if ``'binary'`` it will use base 64
         and can be compressed. See ``compressor`` argument.
-    
+
     appended_format : str in {'raw', 'binary'}, default='raw'
         how that appended data will be encoded.
         If ``'raw'``, raw binary data will be written to file.
         This is space efficient and supported by vtk but isn't
-        valid XML. If ``'binary'``, data will be encoded using base64 
+        valid XML. If ``'binary'``, data will be encoded using base64
         and can be compressed. See ``compressor`` argument.
-    
+
     compression : Bool or int, default=False
         compression level of the binary data.
         Can be ``True``, ``False`` or any integer in ``[-1, 9]`` included.
@@ -787,7 +803,16 @@ def unstructuredGridToVTK(
 
     append : bool, default=True
         Whether to write the data in appended mode or not.
-    
+
+
+    check_cells : Bool, default=True
+        If True, checks ``cell_types`` and
+        ``offsets`` to ensure that the types are
+        correct and the number of points in each cell
+        is coherent with their type.
+        The understood cell types are listed in
+        ``py2vtk.core.vtkcells.py``.
+
     Returns
     -------
     str
@@ -798,12 +823,43 @@ def unstructuredGridToVTK(
     ncells = cell_types.size
     assert offsets.size == ncells
 
-    w = VtkFile(path, 
-                VtkUnstructuredGrid,
-                direct_format=direct_format, 
-                appended_format=appended_format,
-                compression=compression,
-                compressor=compressor)
+    if check_cells:
+        n_points_type_0 = Vtk_points_per_cell.get(cell_types[0])
+        if n_points_type_0 is None:
+            raise ValueError(
+                f"Cell type {cell_types[0]} is not recognized."
+                "If this is a correct VTK cell type, please raise an issue"
+                "on github."
+            )
+        if n_points_type_0 != -1 and n_points_type_0 != offsets[0]:
+            raise ValueError(
+                "Incorrect number of points in cell 0."
+                f"{n_points_type_0} points were expected but {offsets[0]} were given"
+            )
+        for i in range(1, ncells):
+            n_points_type_i = Vtk_points_per_cell.get(cell_types[i])
+            if n_points_type_i is None:
+                raise ValueError(
+                    f"Cell type {cell_types[0]} is not recognized."
+                    "If this is a correct VTK cell type, please raise an issue"
+                    "on github."
+                )
+            if n_points_type_i != -1 and n_points_type_0 != (
+                offsets[i] - offsets[i - 1]
+            ):
+                raise ValueError(
+                    "Incorrect number of points in cell 0."
+                    f"{n_points_type_0} points were expected but {offsets[0]} were given"
+                )
+
+    w = VtkFile(
+        path,
+        VtkUnstructuredGrid,
+        direct_format=direct_format,
+        appended_format=appended_format,
+        compression=compression,
+        compressor=compressor,
+    )
 
     w.openGrid()
     w.openPiece(ncells=ncells, npoints=npoints)
@@ -817,7 +873,9 @@ def unstructuredGridToVTK(
     w.addData("types", cell_types, append=append)
     w.closeElement("Cells")
 
-    _addDataToFile(w, cellData=cellData, pointData=pointData, fieldData=fieldData, append=append)
+    _addDataToFile(
+        w, cellData=cellData, pointData=pointData, fieldData=fieldData, append=append
+    )
 
     w.closePiece()
     w.closeGrid()
@@ -839,10 +897,10 @@ def cylinderToVTK(
     cellData=None,
     pointData=None,
     fieldData=None,
-    direct_format='ascii',
-    appended_format='raw',
+    direct_format="ascii",
+    appended_format="raw",
     compression=False,
-    compressor='zlib',
+    compressor="zlib",
     append=True,
 ):
     """
@@ -897,14 +955,14 @@ def cylinderToVTK(
         If ``'ascii'``, the data will be human readable,
         if ``'binary'`` it will use base 64
         and can be compressed. See ``compressor`` argument.
-    
+
     appended_format : str in {'raw', 'binary'}, default='raw'
         how that appended data will be encoded.
         If ``'raw'``, raw binary data will be written to file.
         This is space efficient and supported by vtk but isn't
-        valid XML. If ``'binary'``, data will be encoded using base64 
+        valid XML. If ``'binary'``, data will be encoded using base64
         and can be compressed. See ``compressor`` argument.
-    
+
     compression : Bool or int, default=False
         compression level of the binary data.
         Can be ``True``, ``False`` or any integer in ``[-1, 9]`` included.
