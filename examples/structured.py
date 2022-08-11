@@ -1,7 +1,9 @@
-import numpy as np
 import random as rnd
 
+import numpy as np
+
 from py2vtk.api.serial import gridToVTK
+
 # ===================
 # Serial Example
 # ===================
@@ -36,7 +38,7 @@ for k in range(nz + 1):
 pressure = np.random.rand(ncells).reshape((nx, ny, nz))
 temp = np.random.rand(npoints).reshape((nx + 1, ny + 1, nz + 1))
 
-structuredGridToVTK(
+gridToVTK(
     "./structured",
     x,
     y,
