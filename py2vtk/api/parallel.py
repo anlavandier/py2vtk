@@ -8,25 +8,27 @@ from ..core.vtkfiles import (
     VtkPStructuredGrid,
     VtkPUnstructuredGrid,
 )
-
 from ..utilities.utils import _addDataToParallelFile
 
-__all__ = ['writeParallelVTKImageData',
-           'writeParallelVTKGrid',
-           'writeParallelVTKPolyData',
-           'writeParallelVTKUnstructuredGrid']
+__all__ = [
+    "writeParallelVTKImageData",
+    "writeParallelVTKGrid",
+    "writeParallelVTKPolyData",
+    "writeParallelVTKUnstructuredGrid",
+]
+
 
 # ==============================================================================
 def writeParallelVTKImageData(
     path,
-    starts, 
-    ends, 
+    starts,
+    ends,
     sources,
     dimension,
-    origin=(0., 0., 0.),
-    spacing=(1., 1., 1.),  
-    ghostlevel=0, 
-    cellData=None, 
+    origin=(0.0, 0.0, 0.0),
+    spacing=(1.0, 1.0, 1.0),
+    ghostlevel=0,
+    cellData=None,
     pointData=None,
 ):
     """
@@ -41,11 +43,11 @@ def writeParallelVTKImageData(
     starts : list
         list of 3-tuple representing where each source file starts
         in each dimension.
-    
+
     ends : list
         list of 3-tuple representing where each source file ends
         in each dimension
-    
+
     dimension : 3-tuple or None, optional
         dimension of the image.
 
@@ -61,7 +63,7 @@ def writeParallelVTKImageData(
         The default is (1.0, 1.0, 1.0).
 
     ghostlevel : int, default=0
-        Number of cells which are present in neighbouring files.
+        Number of cells which are shared between neighbouring files.
 
     pointData : dict
         dictionnary containing the information about the arrays
@@ -80,14 +82,22 @@ def writeParallelVTKImageData(
 
     # Get the extension + check that it's consistent accros all source files
     common_ext = sources[0].split(".")[-1]
-    assert all(s.split(".")[-1] == common_ext for s in sources), "All sources need to share the same extension"
-    if common_ext != 'vti':
+    assert all(
+        s.split(".")[-1] == common_ext for s in sources
+    ), "All sources need to share the same extension"
+    if common_ext != "vti":
         raise ValueError(f"Sources must be VTKImageData ('.vti') and not {common_ext}")
 
     w = VtkParallelFile(path, VtkPImageData)
     start = (0, 0, 0)
 
-    w.openGrid(start=start, end=dimension, origin=origin, spacing=spacing, ghostlevel=ghostlevel)
+    w.openGrid(
+        start=start,
+        end=dimension,
+        origin=origin,
+        spacing=spacing,
+        ghostlevel=ghostlevel,
+    )
 
     _addDataToParallelFile(w, cellData=cellData, pointData=pointData)
 
@@ -102,13 +112,13 @@ def writeParallelVTKImageData(
 
 # ==============================================================================
 def writeParallelVTKGrid(
-    path, 
-    coordsData, 
-    starts, 
-    ends, 
-    sources, 
-    ghostlevel=0, 
-    cellData=None, 
+    path,
+    coordsData,
+    starts,
+    ends,
+    sources,
+    ghostlevel=0,
+    cellData=None,
     pointData=None,
 ):
     """
@@ -128,7 +138,7 @@ def writeParallelVTKGrid(
     starts : list
         list of 3-tuple representing where each source file starts
         in each dimension.
-    
+
     ends : list
         list of 3-tuple representing where each source file ends
         in each dimension
@@ -137,7 +147,7 @@ def writeParallelVTKGrid(
         list of the relative paths of the source files where the actual data is found.
 
     ghostlevel : int, default=0
-        Number of cells which are present in neighbouring files.
+        Number of cells which are shared between neighbouring files.
 
     pointData : dict
         dictionnary containing the information about the arrays
@@ -150,7 +160,7 @@ def writeParallelVTKGrid(
         containing cell centered data.
         Keys shoud be the names of the arrays.
         Values are (dtype, number of components)
-    
+
     """
     # Check that every source as a start and an end
     assert len(starts) == len(ends) == len(sources)
@@ -166,7 +176,9 @@ def writeParallelVTKGrid(
         ftype = VtkPRectilinearGrid
         is_Rect = True
     else:
-        raise ValueError("This functions is meant to work only with ")
+        raise ValueError(
+            "This functions is meant to work only with VTK Structured grids and VTK Rectilinear grids"
+        )
 
     w = VtkParallelFile(path, ftype)
     start = (0, 0, 0)
@@ -198,11 +210,11 @@ def writeParallelVTKGrid(
 
 # ==============================================================================
 def writeParallelVTKPolyData(
-    path, 
-    coordsdtype, 
-    sources, 
-    ghostlevel=0, 
-    cellData=None, 
+    path,
+    coordsdtype,
+    sources,
+    ghostlevel=0,
+    cellData=None,
     pointData=None,
 ):
     """
@@ -220,7 +232,7 @@ def writeParallelVTKPolyData(
         list of the relative paths of the source files where the actual data is found.
 
     ghostlevel : int, default=0
-        Number of cells which are present in neighbouring files.
+        Number of cells which are shared between neighbouring files.
 
     pointData : dict
         dictionnary containing the information about the arrays
@@ -233,22 +245,22 @@ def writeParallelVTKPolyData(
         containing cell centered data.
         Keys shoud be the names of the arrays.
         Values are (dtype, number of components)
-    
+
     """
     # Get the extension + check that it's consistent accros all source files
     common_ext = sources[0].split(".")[-1]
     assert all(s.split(".")[-1] == common_ext for s in sources)
 
-    if common_ext != 'vtp':
+    if common_ext != "vtp":
         raise ValueError(f"Sources must be VTKPolyData ('.vtp') and not {common_ext}")
-    
+
     w = VtkParallelFile(path, VtkPPolyData)
 
     w.openGrid(ghostlevel=ghostlevel)
 
-    w.openElement('PPoints')
-    w.addData('points', dtype=coordsdtype, ncomp=3)
-    w.closeElement('PPoints')
+    w.openElement("PPoints")
+    w.addData("points", dtype=coordsdtype, ncomp=3)
+    w.closeElement("PPoints")
     _addDataToParallelFile(w, cellData=cellData, pointData=pointData)
 
     for source in sources:
@@ -258,17 +270,13 @@ def writeParallelVTKPolyData(
     w.save()
     return w.getFileName()
 
+
 # ==============================================================================
 def writeParallelVTKUnstructuredGrid(
-    path, 
-    coordsdtype, 
-    sources, 
-    ghostlevel=0, 
-    cellData=None, 
-    pointData=None
+    path, coordsdtype, sources, ghostlevel=0, cellData=None, pointData=None
 ):
     """
-    Writes a parallel VTK Unstructured Grid 
+    Writes a parallel VTK Unstructured Grid
 
     Parameters
     ----------
@@ -277,10 +285,6 @@ def writeParallelVTKUnstructuredGrid(
 
     coordsdtype : dtype
         dtype of the coordinates.
-
-    starts : list
-        list of 3-tuple representing where each source file starts
-        in each dimension
 
     source : list
         list of the relative paths of the source files where the actual data is found
@@ -304,9 +308,11 @@ def writeParallelVTKUnstructuredGrid(
     # Get the extension + check that it's consistent accros all source files
     common_ext = sources[0].split(".")[-1]
     assert all(s.split(".")[-1] == common_ext for s in sources)
-    if common_ext != 'vtu':
-        raise ValueError(f"Sources must be VTKPolyData ('.vtu') and not {common_ext}")
-    
+    if common_ext != "vtu":
+        raise ValueError(
+            f"Sources must be VTKUnstructedGrid ('.vtu') and not {common_ext}"
+        )
+
     w = VtkParallelFile(path, VtkPUnstructuredGrid)
     w.openGrid(ghostlevel=ghostlevel)
 
