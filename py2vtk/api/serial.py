@@ -40,7 +40,7 @@ from ..core.vtkfiles import (
     VtkStructuredGrid,
     VtkUnstructuredGrid,
 )
-from ..utilities.utils import _addDataToFile
+from ..utilities.utils import _addDataToFile, _addFieldDataToFile
 
 __all__ = [
     "imageToVTK",
@@ -174,8 +174,9 @@ def imageToVTK(
 
     w.openGrid(start=start, end=end, origin=origin, spacing=spacing)
     w.openPiece(start=start, end=end)
-    _addDataToFile(w, cellData, pointData, fieldData, append=append)
+    _addDataToFile(w, cellData, pointData, append=append)
     w.closePiece()
+    _addFieldDataToFile(w, fieldData, append=append)
     w.closeGrid()
     w.save()
     return w.getFileName()
@@ -325,10 +326,13 @@ def gridToVTK(
         w.closeElement("Points")
 
     # Add data
-    _addDataToFile(w, cellData, pointData, fieldData, append=append)
+    _addDataToFile(w, cellData, pointData, append=append)
 
     # Close Grid part
     w.closePiece()
+
+    _addFieldDataToFile(w, fieldData, append=append)
+
     w.closeGrid()
 
     # Close file
@@ -441,9 +445,10 @@ def pointsToVTK(
     w.addData("types", cell_types, append=append)
     w.closeElement("Cells")
 
-    _addDataToFile(w, cellData=None, pointData=data, fieldData=fieldData, append=append)
+    _addDataToFile(w, cellData=None, pointData=data, append=append)
 
     w.closePiece()
+    _addFieldDataToFile(w, fieldData, append=append)
     w.closeGrid()
 
     w.save()
@@ -569,11 +574,10 @@ def linesToVTK(
     w.addData("types", cell_types, append=append)
     w.closeElement("Cells")
 
-    _addDataToFile(
-        w, cellData=cellData, pointData=pointData, fieldData=fieldData, append=append
-    )
+    _addDataToFile(w, cellData=cellData, pointData=pointData, append=append)
 
     w.closePiece()
+    _addFieldDataToFile(w, fieldData, append=append)
     w.closeGrid()
 
     w.save()
@@ -699,11 +703,10 @@ def polyLinesToVTK(
     w.addData("types", cell_types, append=append)
     w.closeElement("Cells")
 
-    _addDataToFile(
-        w, cellData=cellData, pointData=pointData, fieldData=fieldData, append=append
-    )
+    _addDataToFile(w, cellData=cellData, pointData=pointData, append=append)
 
     w.closePiece()
+    _addFieldDataToFile(w, fieldData, append=append)
     w.closeGrid()
 
     w.save()
@@ -873,11 +876,10 @@ def unstructuredGridToVTK(
     w.addData("types", cell_types, append=append)
     w.closeElement("Cells")
 
-    _addDataToFile(
-        w, cellData=cellData, pointData=pointData, fieldData=fieldData, append=append
-    )
+    _addDataToFile(w, cellData=cellData, pointData=pointData, append=append)
 
     w.closePiece()
+    _addFieldDataToFile(w, fieldData, append=append)
     w.closeGrid()
 
     w.save()

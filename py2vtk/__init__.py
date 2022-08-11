@@ -1,5 +1,5 @@
-from api import *
-from core import *
+from .api import *
+from .core import *
 
 __all__ = [
     "imageToVTK",

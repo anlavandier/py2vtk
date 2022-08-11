@@ -30,7 +30,7 @@
 class VtkCellType:
     """
     Wrapper class for VTK cell types.
-    
+
     Parameters
     ----------
     tid : int
@@ -45,6 +45,7 @@ class VtkCellType:
 
     def __str__(self):
         return "VtkCellType( %s ) \n" % (self.name)
+
 
 # Linear cells
 VtkEmptyCell = VtkCellType(0, "EmptyCell")
@@ -137,7 +138,6 @@ Vtk_points_per_cell = {
     14: 5,
     15: 10,
     16: 12,
-
     # Quadratic, isoparametric cells
     21: 3,
     22: 6,
@@ -155,16 +155,12 @@ Vtk_points_per_cell = {
     34: 7,
     36: -1,
     37: 20,
-
     # Cubic, isoparametric cell
     35: -1,
-    
     # Special class of cells formed by convex group of points
     41: -1,
-
     # Polyhedron cell (consisting of polygonal faces)
     42: -1,
-
     # Higher order cells in parametric form
     51: -1,
     52: -1,
@@ -172,7 +168,6 @@ Vtk_points_per_cell = {
     54: -1,
     55: -1,
     56: -1,
-
     # Arbitrary order Lagrange elements (formulated separated from generic higher order cells)
     68: -1,
     69: -1,
@@ -181,7 +176,6 @@ Vtk_points_per_cell = {
     72: -1,
     73: -1,
     74: -1,
-
     # Arbitrary order Bezier elements (formulated separated from generic higher order cells)
     75: -1,
     76: -1,
@@ -189,5 +183,5 @@ Vtk_points_per_cell = {
     78: -1,
     79: -1,
     80: -1,
-    81: -1,    
+    81: -1,
 }

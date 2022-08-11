@@ -24,25 +24,30 @@
 # ***********************************************************************************
 """Definition of the VTK File formats and low level interface"""
 
-import sys
 import os
+import sys
+import warnings
+
 import numpy as np
 
 from .evtk import encodeData
 from .xml import XmlWriter
 
-__all__ = ['VtkImageData',
-           'VtkPolyData',
-           'VtkRectilinearGrid',
-           'VtkStructuredGrid',
-           'VtkUnstructuredGrid',
-           'VtkPImageData',
-           'VtkPPolyData',
-           'VtkPRectilinear',
-           'VtkPStructuredGrid',
-           'VtkPUnstructuredGrid',
-           'VtkFile',
-           'VtkParallelFile']
+__all__ = [
+    "VtkImageData",
+    "VtkPolyData",
+    "VtkRectilinearGrid",
+    "VtkStructuredGrid",
+    "VtkUnstructuredGrid",
+    "VtkPImageData",
+    "VtkPPolyData",
+    "VtkPRectilinearGrid",
+    "VtkPStructuredGrid",
+    "VtkPUnstructuredGrid",
+    "VtkFile",
+    "VtkParallelFile",
+]
+
 
 # =============================================================================
 # VTK Filetypes
@@ -51,7 +56,7 @@ __all__ = ['VtkImageData',
 class VtkFileType:
     """
     Wrapper class for serial VTK file types.
-    
+
     Parameters
     ----------
     name : str
@@ -79,7 +84,7 @@ VtkUnstructuredGrid = VtkFileType("UnstructuredGrid", ".vtu")
 class VtkParallelFileType:
     """
     A wrapper class for parallel VTK file types.
-    
+
     Parameters
     ----------
     vtkftype : VtkFileType
@@ -101,13 +106,14 @@ VtkPRectilinearGrid = VtkParallelFileType(VtkRectilinearGrid)
 VtkPStructuredGrid = VtkParallelFileType(VtkStructuredGrid)
 VtkPUnstructuredGrid = VtkParallelFileType(VtkUnstructuredGrid)
 
+
 # =============================================================================
 # VTK Data Types
 # =============================================================================
 class VtkDataType:
     """
     Wrapper class for VTK data types.
-    
+
     Parameters
     ----------
     size : int
@@ -149,7 +155,6 @@ np_to_vtk = {
     "float32": VtkFloat32,
     "float64": VtkFloat64,
 }
-
 
 
 # ==============================
@@ -249,21 +254,29 @@ class VtkFile:
         filename without extension.
     ftype : str
         file type, e.g. VtkImageData, etc.
-    
+
     direct_format: str in {"ascii", "binary"}, default="binary"
         format of the non appended data.
 
     appended_format : str in {"base64", "raw"}, default="raw"
         format of the appended data.
-    
+
     compression : bool or int, default=False
         Whether and how much to compress the binary data.
-    
+
     compressor : str in {'zlib', 'lzma'}, default='zlib'
         compressor to use to compress binary data.
     """
-    def __init__(self, filepath, ftype, direct_format="ascii", appended_format="raw", compression=False,
-                 compressor='zlib'):
+
+    def __init__(
+        self,
+        filepath,
+        ftype,
+        direct_format="ascii",
+        appended_format="raw",
+        compression=False,
+        compressor="zlib",
+    ):
         self.ftype = ftype
         self.filename = filepath + ftype.ext
         self.xml = XmlWriter(self.filename)
@@ -285,6 +298,12 @@ class VtkFile:
             byte_order=_get_byte_order(),
             header_type="UInt64",
         )
+        if appended_format == "raw" and compression not in [0, False]:
+            warnings.warn(
+                "Compressed binary data and raw appended data are not compatible. "
+                "Binary data will stay uncompressed."
+            )
+            compression = 0
 
         if not compression:
             self.compression = 0
@@ -293,19 +312,20 @@ class VtkFile:
         elif isinstance(compression, int) and -1 <= compression and compression <= 9:
             self.compression = compression
         else:
-            raise ValueError("compression can only be True, False, or an"
-                             "integer between -1 and 9 included")
-        
+            raise ValueError(
+                "compression can only be True, False, or an"
+                "integer between -1 and 9 included"
+            )
+
         if self.compression != 0:
-            if compressor == 'zlib':
-                self.xml.addAttributes(compressor='vtkZLibDataCompressor')
-            elif compressor == 'lzma':
-                self.xml.addAttributes(compressor='vtkLZMADataCompressor')
+            if compressor == "zlib":
+                self.xml.addAttributes(compressor="vtkZLibDataCompressor")
+            elif compressor == "lzma":
+                self.xml.addAttributes(compressor="vtkLZMADataCompressor")
             else:
                 raise ValueError("Invalid compressor name")
 
         self.compressor = compressor
-
 
     def getFileName(self):
         """Return absolute path to this file."""
@@ -324,7 +344,7 @@ class VtkFile:
     ):
         """
         Open piece section.
-        
+
         Parameters
         ----------
         start : array-like, optional
@@ -396,7 +416,7 @@ class VtkFile:
     ):
         """
         Open data section.
-        
+
         Parameters
         ----------
         nodeType : str
@@ -427,7 +447,7 @@ class VtkFile:
     def closeData(self, nodeType):
         """
         Close data section.
-        
+
         Parameters
         ----------
         nodeType : str
@@ -438,7 +458,7 @@ class VtkFile:
     def openGrid(self, start=None, end=None, origin=None, spacing=None):
         """
         Open grid section.
-        
+
         Parameters
         ----------
         start : array-like, optional
@@ -482,8 +502,6 @@ class VtkFile:
         """
         self.xml.closeElement(self.ftype.name)
 
-
-
     def addData(self, name, data, append=True):
         """
         Add array description to xml header section and
@@ -499,13 +517,13 @@ class VtkFile:
             of a vector field.
             All arrays must be one dimensional or three-dimensional.
         format : str in {"appended", "ascii", "binary"}
-        """        
+        """
         if isinstance(data, (tuple, list)):
             assert len(data) == 3
             ncomp = 3
             nelem = data[0].size
             dtype = data[0].dtype.name
-        
+
         else:
             assert isinstance(data, np.ndarray)
             ncomp = 1
@@ -524,23 +542,29 @@ class VtkFile:
                 NumberOfTuples=nelem,
                 format=self.direct_format,
             )
-            _, encoded_data = encodeData(data, self.direct_format, 
-                                         level=self.compression, 
-                                         compressor=self.compressor)
+            _, encoded_data = encodeData(
+                data,
+                self.direct_format,
+                level=self.compression,
+                compressor=self.compressor,
+            )
 
             self.xml.stream.write(encoded_data)
             self.closeElement("DataArray")
         else:
-            size, encoded_data = encodeData(data, self.appended_format, 
-                                            level=self.compression, 
-                                            compressor=self.compressor)
+            size, encoded_data = encodeData(
+                data,
+                self.appended_format,
+                level=self.compression,
+                compressor=self.compressor,
+            )
             self.xml.addAttributes(
                 Name=name,
                 type=dtype.name,
                 NumberOfComponents=ncomp,
                 NumberOfTuples=nelem,
                 format="appended",
-                offset=self.offset
+                offset=self.offset,
             )
             self.xml.closeElement()
             self.offset += size
@@ -574,13 +598,13 @@ class VtkFile:
         """
         if not self.appendedDataIsOpen:
             if self.appended_format != "raw":
-                self.xml.openElement("AppendedData").addAttributes(format="base64").addText(
-                    "_"
-                )            
+                self.xml.openElement("AppendedData").addAttributes(
+                    format="base64"
+                ).addText("_")
             else:
-                self.xml.openElement("AppendedData").addAttributes(encoding="raw").addText(
-                    "_"
-                )
+                self.xml.openElement("AppendedData").addAttributes(
+                    encoding="raw"
+                ).addText("_")
             self.appendedDataIsOpen = True
 
     def _closeAppendedData(self):
@@ -643,7 +667,6 @@ class VtkParallelFile:
             header_type="UInt64",
         )
         self.isOpen = True
-
 
     def getFileName(self):
         """Return absolute path to this file."""

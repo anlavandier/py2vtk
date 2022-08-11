@@ -25,8 +25,9 @@
 """Simple class to generate a well-formed XML file"""
 
 # Compared to pyevtk's original XmlWriter class, automatic
-# tabulation (using 2 whitespaces) was added to make the XML file more 
+# tabulation (using 2 whitespaces) was added to make the XML file more
 # human readable.
+
 
 class XmlWriter:
     """
@@ -129,7 +130,7 @@ class XmlWriter:
             st = f' {key}="{kwargs[key]}"'
             self.stream.write(str.encode(st))
         if newline:
-            newline = ">\n" + ' ' * len(self.current) * 2
+            newline = ">\n" + " " * len(self.current) * 2
             self.stream.write(str.encode(newline))
             self.openTag = False
         return self

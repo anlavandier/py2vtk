@@ -28,7 +28,7 @@
 # * Copyright © 2018-2022 Lucas Frérot                                              *
 # * Permission is hereby granted, free of charge, to any person obtaining a copy of *
 # * this software and associated documentation files (the "Software"), to deal in   *
-# * the Software without restriction, including without limitation the rights to    * 
+# * the Software without restriction, including without limitation the rights to    *
 # * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies   *
 # * of the Software, and to permit persons to whom the Software is furnished to do  *
 # * so, subject to the following conditions:                                        *
@@ -36,12 +36,12 @@
 # * copies or substantial portions of the Software.                                 *
 # *                                                                                 *
 # * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR      *
-# * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,        * 
+# * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,        *
 # * FITNESS FOR A PARTICULAR  PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE    *
 # * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER          *
 # * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,   *
 # * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE   *
-# * SOFTWARE.                                                                       *                 
+# * SOFTWARE.                                                                       *
 # ***********************************************************************************
 """Export routines"""
 
@@ -50,25 +50,28 @@ import io
 import struct
 import sys
 import zlib
-
-import numpy as np
-
 from base64 import b64encode
 
+import numpy as np
 
 # Optional package LZMA for compression
 try:
     from lzma import compress as lzma_c
+
     def lzma_compress(data, level):
         level = None if level == -1 else level
         return lzma_c(data, preset=level)
+
 except ImportError as e:
-    def lzma_compress(data, level): 
-        raise e
+    import_error = e
+
+    def lzma_compress(data, level):
+        raise import_error
+
 
 compressor_dict = {
-    'zlib': zlib.compress,
-    'lzma': lzma_compress,
+    "zlib": zlib.compress,
+    "lzma": lzma_compress,
 }
 
 # Map numpy dtype to struct format
@@ -92,6 +95,7 @@ def _get_byte_order_char():
         return "<"
     return ">"
 
+
 def compress(array, level, compress_func):
     """
     Compress an array with a compressor. Taken from uvw, https://github.com/prs513rosewood/uvw
@@ -106,14 +110,16 @@ def compress(array, level, compress_func):
     last_block_size = data_size % max_block_size
 
     # Compress first n_blocks - 1  blocks of size max_block_size
-    compressed_data = [compress_func(raw_array[i* max_block_size + (i + 1) * max_block_size], level)
-                        for i in range(n_blocks - 1)]
+    compressed_data = [
+        compress_func(raw_array[i * max_block_size + (i + 1) * max_block_size], level)
+        for i in range(n_blocks - 1)
+    ]
 
     # Compress last block of size last_block_size
     compressed_data.append(compress_func(raw_array[-last_block_size:], level=level))
 
     # Header data (cf https://vtk.org/Wiki/VTK_XML_Formats#Compressed_Data)
-    header_dtype = np.dtype(_get_byte_order_char() + 'u8')
+    header_dtype = np.dtype(_get_byte_order_char() + "u8")
     usize = max_block_size
     psize = last_block_size
     csize = [len(x) for x in compressed_data]
@@ -121,7 +127,8 @@ def compress(array, level, compress_func):
 
     return header.tobytes(), b"".join(compressed_data)
 
-def encodeData(data, format, level=0, compressor='zlib'):
+
+def encodeData(data, format, level=0, compressor="zlib"):
     """
     Encodes a single numpy ndarray of a 3-tuple of arrays
     using a specific and a compression level if relevant.
@@ -139,15 +146,15 @@ def encodeData(data, format, level=0, compressor='zlib'):
     encoded_data : bytes
         encoded data with header
     """
-    is_vector_comp = isinstance (data, (tuple, list))
+    is_vector_comp = isinstance(data, (tuple, list))
     if is_vector_comp:
         assert len(data) == 3
 
         x, y, z = data[0], data[1], data[2]
-        
-        assert x.flags['C_CONTIGUOUS'] or x.flags['F_CONTIGUOUS']
-        assert y.flags['C_CONTIGUOUS'] or y.flags['F_CONTIGUOUS']
-        assert z.flags['C_CONTIGUOUS'] or z.flags['F_CONTIGUOUS']
+
+        assert x.flags["C_CONTIGUOUS"] or x.flags["F_CONTIGUOUS"]
+        assert y.flags["C_CONTIGUOUS"] or y.flags["F_CONTIGUOUS"]
+        assert z.flags["C_CONTIGUOUS"] or z.flags["F_CONTIGUOUS"]
 
         assert x.ndim == 1 or x.ndim == 3
         assert y.ndim == 1 or y.ndim == 3
@@ -159,47 +166,41 @@ def encodeData(data, format, level=0, compressor='zlib'):
         y = np.asfortranarray(y)
         z = np.asfortranarray(z)
 
-        xyz = np.empty((3,) + x.shape, dtype=x.dtype, order='F')
+        xyz = np.empty((3,) + x.shape, dtype=x.dtype, order="F")
 
         xyz[0] = x
         xyz[1] = y
         xyz[2] = z
-    
-        xxyyzz = np.ravel(xyz, order='K')
 
-        raw_fmt = (
-            _get_byte_order_char() + str(xyz.size) + np_to_struct[x.dtype.name]
-        )
-        ascii_fmt = '%d' if np.issubdtype(xxyyzz.dtype, np.integer) else '%.18e'
+        xxyyzz = np.ravel(xyz, order="K")
+
+        raw_fmt = _get_byte_order_char() + str(xyz.size) + np_to_struct[x.dtype.name]
+        ascii_fmt = "%d" if np.issubdtype(xxyyzz.dtype, np.integer) else "%.18e"
 
     else:
         x = data
 
-        assert x.flags['C_CONTIGUOUS'] or x.flags['F_CONTIGUOUS']
-        
-        assert x.ndim == 3 or x.ndim == 1
-        
-        xx = np.ravel(x, order='F')
-        raw_fmt = (
-        _get_byte_order_char() + str(x.size) + np_to_struct[x.dtype.name]
-        )
+        assert x.flags["C_CONTIGUOUS"] or x.flags["F_CONTIGUOUS"]
 
-        ascii_fmt = '%d' if np.issubdtype(x.dtype, np.integer) else '%.18e'
+        assert x.ndim == 3 or x.ndim == 1
+
+        xx = np.ravel(x, order="F")
+        raw_fmt = _get_byte_order_char() + str(x.size) + np_to_struct[x.dtype.name]
+
+        ascii_fmt = "%d" if np.issubdtype(x.dtype, np.integer) else "%.18e"
 
     if format == "raw":
-        size_fmt = (
-        _get_byte_order_char() + "Q"
-        ) 
+        size_fmt = _get_byte_order_char() + "Q"
         if is_vector_comp:
             bin_pack = struct.pack(size_fmt, xxyyzz.nbytes)
             bin_pack += struct.pack(raw_fmt, *xxyyzz)
-            size = xxyyzz.nbytes + 8 # header of size 8
+            size = xxyyzz.nbytes + 8  # header of size 8
         else:
             bin_pack = struct.pack(size_fmt, xx.nbytes)
-            bin_pack +=  struct.pack(raw_fmt, *xx)
-            size = xx.nbytes + 8 # header of size 8
+            bin_pack += struct.pack(raw_fmt, *xx)
+            size = xx.nbytes + 8  # header of size 8
         return size, bin_pack
-    
+
     elif format == "ascii":
         stream = io.StringIO()
         if is_vector_comp:
@@ -207,34 +208,36 @@ def encodeData(data, format, level=0, compressor='zlib'):
                 stream,
                 xxyyzz,
                 fmt=ascii_fmt,
-                newline=' ',
+                newline=" ",
             )
         else:
             np.savetxt(
                 stream,
                 xx,
                 fmt=ascii_fmt,
-                newline=' ',
+                newline=" ",
             )
-        return  0, stream.getvalue().encode()
+        return 0, stream.getvalue().encode()
 
-    elif format == 'binary':
+    elif format == "binary":
         compress_func = compressor_dict[compressor]
 
         if is_vector_comp:
             if level == 0:
-                header = np.array(xxyyzz.nbytes, dtype=np.dtype(xxyyzz.dtype.byteorder + 'u8'))
+                header = np.array(
+                    xxyyzz.nbytes, dtype=np.dtype(xxyyzz.dtype.byteorder + "u8")
+                )
                 formatted_data = memoryview(xxyyzz)
             else:
                 header, formatted_data = compress(xxyyzz, level, compress_func)
         else:
             if level == 0:
-                header = np.array(xx.nbytes, dtype=np.dtype(xx.dtype.byteorder + 'u8'))
+                header = np.array(xx.nbytes, dtype=np.dtype(xx.dtype.byteorder + "u8"))
                 formatted_data = memoryview(xx)
             else:
                 header, formatted_data = compress(xx, level, compress_func)
- 
-        encoded_data = b64encode(header) 
+
+        encoded_data = b64encode(header)
         encoded_data += b64encode(formatted_data)
         return len(encoded_data), encoded_data
 

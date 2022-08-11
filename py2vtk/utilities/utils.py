@@ -26,9 +26,10 @@ import numpy as np
 
 from ..core.vtkfiles import VtkFile, VtkParallelFile
 
-__all__ = ['_addDataToFile', '_addDataToParallelFile']
+__all__ = ["_addDataToFile", "_addFieldDataToFile", "_addDataToParallelFile"]
 
-def _addDataToFile(vtkFile, cellData=None, pointData=None, fieldData=None, append=True):
+
+def _addDataToFile(vtkFile, cellData=None, pointData=None, append=True):
     assert isinstance(vtkFile, VtkFile)
     # Point data
     if pointData:
@@ -58,13 +59,13 @@ def _addDataToFile(vtkFile, cellData=None, pointData=None, fieldData=None, appen
             vtkFile.addData(key, data, append=append)
         vtkFile.closeData("Cell")
 
+
+def _addFieldDataToFile(vtkFile, fieldData=None, append=True):
     # Field data
     # https://www.visitusers.org/index.php?title=Time_and_Cycle_in_VTK_files#XML_VTK_files
     if fieldData:
-        keys = list(fieldData.keys())
         vtkFile.openData("Field")  # no attributes in FieldData
-        for key in keys:
-            data = fieldData[key]
+        for key, data in fieldData.items():
             vtkFile.addData(key, data, append=append)
         vtkFile.closeData("Field")
 

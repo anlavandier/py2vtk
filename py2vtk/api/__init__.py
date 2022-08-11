@@ -1,2 +1,2 @@
-from .serial import *
 from .parallel import *
+from .serial import *
