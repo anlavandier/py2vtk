@@ -24,6 +24,7 @@ ATOL = 1e-15
 RTOL = 1e-15
 
 
+@pytest.mark.serial
 @pytest.mark.parametrize("compressor", ["zlib", "lzma"])
 @pytest.mark.parametrize("compression", [True, False, 5])
 @pytest.mark.parametrize("direct_format", ["binary", "ascii"])
@@ -91,6 +92,7 @@ def test_image_data(compressor, compression, direct_format, appended_format):
     os.remove(vtk_file.getFileName())
 
 
+@pytest.mark.serial
 @pytest.mark.parametrize("compressor", ["zlib", "lzma"])
 @pytest.mark.parametrize("compression", [True, False, 5])
 @pytest.mark.parametrize("direct_format", ["binary", "ascii"])
@@ -164,6 +166,7 @@ def test_rectilinear_grid(compressor, compression, direct_format, appended_forma
     os.remove(vtk_file.getFileName())
 
 
+@pytest.mark.serial
 @pytest.mark.parametrize("compressor", ["zlib", "lzma"])
 @pytest.mark.parametrize("compression", [True, False, 5])
 @pytest.mark.parametrize("direct_format", ["binary", "ascii"])
@@ -236,6 +239,7 @@ def test_structured_grid(compressor, compression, direct_format, appended_format
     os.remove(vtk_file.getFileName())
 
 
+@pytest.mark.serial
 @pytest.mark.parametrize("compressor", ["zlib", "lzma"])
 @pytest.mark.parametrize("compression", [True, False, 5])
 @pytest.mark.parametrize("direct_format", ["binary", "ascii"])
