@@ -41,6 +41,7 @@ jobs:
         python -m pip install .[tests,mpi]
 
     - name: Set-up test directory
+        run: |
         mkdir pytest_dir
 
     - name: Test with pytest
