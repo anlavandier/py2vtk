@@ -1,4 +1,5 @@
 """ High level API for parallel VTK files"""
+import numpy as np
 
 from ..core.vtkfiles import (
     VtkParallelFile,
@@ -24,7 +25,7 @@ def writeParallelVTKImageData(
     starts,
     ends,
     sources,
-    dimension,
+    dimension=None,
     origin=(0.0, 0.0, 0.0),
     spacing=(1.0, 1.0, 1.0),
     ghostlevel=0,
@@ -48,7 +49,7 @@ def writeParallelVTKImageData(
         list of 3-tuple representing where each source file ends
         in each dimension
 
-    dimension : 3-tuple or None, optional
+    dimension : tuple or None, optional
         dimension of the image.
 
     source : list
@@ -86,10 +87,15 @@ def writeParallelVTKImageData(
         s.split(".")[-1] == common_ext for s in sources
     ), "All sources need to share the same extension"
     if common_ext != "vti":
-        raise ValueError(f"Sources must be VTKImageData ('.vti') and not {common_ext}")
+        raise ValueError(
+            f"Sources must be VTKImageData ('.vti') and not {common_ext} files"
+        )
 
     w = VtkParallelFile(path, VtkPImageData)
     start = (0, 0, 0)
+
+    if dimension is None:
+        dimension = tuple(np.max(np.array(ends), axis=0))
 
     w.openGrid(
         start=start,
@@ -113,10 +119,11 @@ def writeParallelVTKImageData(
 # ==============================================================================
 def writeParallelVTKGrid(
     path,
-    coordsData,
+    coordsDtype,
     starts,
     ends,
     sources,
+    dimension=None,
     ghostlevel=0,
     cellData=None,
     pointData=None,
@@ -130,10 +137,8 @@ def writeParallelVTKGrid(
     path : str
         name of the file without extension.
 
-    coordsData : tuple
-        2-tuple (shape, dtype) where shape is the
-        shape of the coordinates of the full mesh
-        and dtype is the dtype of the coordinates.
+    coordsDtype : numpy.dtype
+        the dtype of the coordinates.
 
     starts : list
         list of 3-tuple representing where each source file starts
@@ -182,10 +187,11 @@ def writeParallelVTKGrid(
 
     w = VtkParallelFile(path, ftype)
     start = (0, 0, 0)
-    (s_x, s_y, s_z), dtype = coordsData
-    end = s_x - 1, s_y - 1, s_z - 1
+    dtype = coordsDtype
+    if dimension is None:
+        dimension = tuple(np.max(np.array(ends), axis=0))
 
-    w.openGrid(start=start, end=end, ghostlevel=ghostlevel)
+    w.openGrid(start=start, end=dimension, ghostlevel=ghostlevel)
 
     _addDataToParallelFile(w, cellData=cellData, pointData=pointData)
 
@@ -211,7 +217,7 @@ def writeParallelVTKGrid(
 # ==============================================================================
 def writeParallelVTKPolyData(
     path,
-    coordsdtype,
+    coordsDtype,
     sources,
     ghostlevel=0,
     cellData=None,
@@ -225,8 +231,8 @@ def writeParallelVTKPolyData(
     path : str
         name of the file without extension.
 
-    coordsdtype : dtype
-        dtype of the coordinates.
+    coordsDtype : numpy.dtype
+        the dtype of the coordinates.
 
     source : list
         list of the relative paths of the source files where the actual data is found.
@@ -252,14 +258,16 @@ def writeParallelVTKPolyData(
     assert all(s.split(".")[-1] == common_ext for s in sources)
 
     if common_ext != "vtp":
-        raise ValueError(f"Sources must be VTKPolyData ('.vtp') and not {common_ext}")
+        raise ValueError(
+            f"Sources must be VTKPolyData ('.vtp') and not {common_ext} files"
+        )
 
     w = VtkParallelFile(path, VtkPPolyData)
 
     w.openGrid(ghostlevel=ghostlevel)
 
     w.openElement("PPoints")
-    w.addData("points", dtype=coordsdtype, ncomp=3)
+    w.addData("points", dtype=coordsDtype, ncomp=3)
     w.closeElement("PPoints")
     _addDataToParallelFile(w, cellData=cellData, pointData=pointData)
 
@@ -310,7 +318,7 @@ def writeParallelVTKUnstructuredGrid(
     assert all(s.split(".")[-1] == common_ext for s in sources)
     if common_ext != "vtu":
         raise ValueError(
-            f"Sources must be VTKUnstructedGrid ('.vtu') and not {common_ext}"
+            f"Sources must be VTKUnstructuredGrid ('.vtu') and not {common_ext} files"
         )
 
     w = VtkParallelFile(path, VtkPUnstructuredGrid)

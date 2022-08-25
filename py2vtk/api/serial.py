@@ -47,6 +47,7 @@ __all__ = [
     "gridToVTK",
     "pointsToVTK",
     "linesToVTK",
+    "polyLinesToVTK",
     "unstructuredGridToVTK",
     "cylinderToVTK",
 ]
@@ -56,6 +57,7 @@ __all__ = [
 def imageToVTK(
     path,
     start=(0, 0, 0),
+    end=None,
     origin=(0.0, 0.0, 0.0),
     spacing=(1.0, 1.0, 1.0),
     cellData=None,
@@ -75,9 +77,15 @@ def imageToVTK(
         name of the file without extension where data should be saved.
 
     start : tuple, optional
-        start of the coordinates.
+        start of this image relative to a global image.
         Used in the distributed context where each process
         writes its own vtk file. Default is (0, 0, 0).
+
+    end : tuple or None, optional
+        end of this image relative to a global image.
+        Used in the distributed context where each process
+        writes its own vtk file. If None, it will be deduced
+        from the data.
 
     origin : tuple, optional
         grid origin.
@@ -145,22 +153,22 @@ def imageToVTK(
     assert cellData is not None or pointData is not None
 
     # Extract dimensions
-    end = None
-    if cellData is not None:
-        keys = list(cellData.keys())
-        data = cellData[keys[0]]
-        if hasattr(data, "shape"):
-            end = data.shape
-        elif data[0].ndim == 3 and data[1].ndim == 3 and data[2].ndim == 3:
-            end = data[0].shape
-    elif pointData is not None:
-        keys = list(pointData.keys())
-        data = pointData[keys[0]]
-        if hasattr(data, "shape"):
-            end = data.shape
-        elif data[0].ndim == 3 and data[1].ndim == 3 and data[2].ndim == 3:
-            end = data[0].shape
-        end = (end[0] - 1, end[1] - 1, end[2] - 1)
+    if end is None:
+        if cellData is not None:
+            keys = list(cellData.keys())
+            data = cellData[keys[0]]
+            if hasattr(data, "shape"):
+                end = data.shape
+            elif data[0].ndim == 3 and data[1].ndim == 3 and data[2].ndim == 3:
+                end = data[0].shape
+        elif pointData is not None:
+            keys = list(pointData.keys())
+            data = pointData[keys[0]]
+            if hasattr(data, "shape"):
+                end = data.shape
+            elif data[0].ndim == 3 and data[1].ndim == 3 and data[2].ndim == 3:
+                end = tuple(np.array(data[0].shape) - 1)
+        end = (start[0] + end[0], start[1] + end[1], start[2] + end[2])
 
     # Write data to file
     w = VtkFile(
@@ -215,7 +223,7 @@ def gridToVTK(
         z coordinate axis.
 
     start : tuple, optional
-        start of the coordinates.
+        start of this grid relative to a global grid.
         Used in the distributed context where each process
         writes its own vtk file. Default is (0, 0, 0).
 
@@ -292,7 +300,7 @@ def gridToVTK(
         ftype = VtkStructuredGrid
     else:
         raise ValueError(
-            f"x, y and z should have ndim == 3 but they have ndim of {x.ndim}, {y.ndim}"
+            f"x, y and z should have ndim == 3 or 1 but they have ndim of {x.ndim}, {y.ndim}"
             f" and {z.ndim} respectively"
         )
 
@@ -540,8 +548,6 @@ def linesToVTK(
     assert x.size % 2 == 0
     npoints = x.size
     ncells = x.size / 2
-
-    # Check cellData has the same size that the number of cells
 
     # create some temporary arrays to write grid topology
     offsets = np.arange(
@@ -847,12 +853,12 @@ def unstructuredGridToVTK(
                     "If this is a correct VTK cell type, please raise an issue"
                     "on github."
                 )
-            if n_points_type_i != -1 and n_points_type_0 != (
+            if n_points_type_i != -1 and n_points_type_i != (
                 offsets[i] - offsets[i - 1]
             ):
                 raise ValueError(
                     "Incorrect number of points in cell 0."
-                    f"{n_points_type_0} points were expected but {offsets[0]} were given"
+                    f" {n_points_type_0} points were expected but {offsets[i]} were given"
                 )
 
     w = VtkFile(
