@@ -18,7 +18,7 @@ jobs:
       matrix:
         python-version: ["3.8", "3.9", "3.10"]
 
-    name: ${{ matrix.os }} / Python ${{ matrix.python-version }}
+    name: Python ${{ matrix.python-version }}
 
     steps:
     - uses: actions/checkout@v3
@@ -47,7 +47,7 @@ jobs:
     - name: Test with pytest
       working-directory: ./pytest_dir
       run: |
-        py.test py2vtk -m "serial"
+        py.test .. -m "serial"
 
     - name: Remove test directory
       run: |

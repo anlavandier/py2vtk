@@ -8,7 +8,7 @@ packages = [
     "py2vtk",
     "py2vtk.api",
     "py2vtk.core",
-    # 'py2vtk.parallel',
+    "py2vtk.mpi",
     # 'py2vtk.dask',
 ]
 
