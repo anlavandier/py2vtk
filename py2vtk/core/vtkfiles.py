@@ -701,7 +701,7 @@ class VtkParallelFile:
         assert source.split(".")[-1] == self.ftype.ext[2:]
 
         self.xml.openElement("Piece")
-        if start and end:
+        if start is not None and end is not None:
             ext = _mix_extents(start, end)
             self.xml.addAttributes(Extent=ext)
         self.xml.addAttributes(Source=source)
@@ -852,7 +852,7 @@ class VtkParallelFile:
         """
         dtype = np_to_vtk[dtype.name]
 
-        self.xml.openElement("DataArray")
+        self.xml.openElement("PDataArray")
         self.xml.addAttributes(
             Name=name,
             NumberOfComponents=ncomp,

@@ -156,9 +156,9 @@ def encodeData(data, format, level=0, compressor="zlib"):
         assert y.flags["C_CONTIGUOUS"] or y.flags["F_CONTIGUOUS"]
         assert z.flags["C_CONTIGUOUS"] or z.flags["F_CONTIGUOUS"]
 
-        assert x.ndim == 1 or x.ndim == 3
-        assert y.ndim == 1 or y.ndim == 3
-        assert z.ndim == 1 or z.ndim == 3
+        assert x.ndim == 1 or x.ndim == 3 or x.ndim == 0
+        assert y.ndim == 1 or y.ndim == 3 or y.ndim == 0
+        assert z.ndim == 1 or z.ndim == 3 or z.ndim == 0
 
         assert x.size == y.size == z.size
 
@@ -182,7 +182,7 @@ def encodeData(data, format, level=0, compressor="zlib"):
 
         assert x.flags["C_CONTIGUOUS"] or x.flags["F_CONTIGUOUS"]
 
-        assert x.ndim == 3 or x.ndim == 1
+        assert x.ndim == 3 or x.ndim == 1 or x.ndim == 0
 
         xx = np.ravel(x, order="F")
         raw_fmt = _get_byte_order_char() + str(x.size) + np_to_struct[x.dtype.name]
