@@ -1,7 +1,7 @@
 # This workflow will install Python dependencies and run tests with a variety of Python versions
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
 
-name: Python package
+name: Run tests
 
 on:
   push:
@@ -18,22 +18,34 @@ jobs:
       matrix:
         python-version: ["3.8", "3.9", "3.10"]
 
+    name: ${{ matrix.os }} / Python ${{ matrix.python-version }}
+
     steps:
     - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v3
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install project
+
+    - name: Install non-Python dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install openmpi-bin libopenmpi-dev
+
+    - name: Upgrade pip
       run: |
         python -m pip install --upgrade pip
-        python -m pip install pytest
+
+    - name: Install project
+      run: |
         python -m pip install .[tests,mpi]
 
-    - name: Test with pytest
-      run: |
+    - name: Set-up test directory
         mkdir pytest_dir
-        cd pytest_dir
+
+    - name: Test with pytest
+      working-directory: ./pytest_dir
+      run: |
         py.test py2vtk -m "serial"
 
     - name: Remove test directory
