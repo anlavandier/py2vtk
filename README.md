@@ -1,7 +1,7 @@
 # Py2VTK
 
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-![example workflow](https://github.com/anlavandier/py2vtk/actions/workflows/tests.yml/badge.svg)
+[![CI](https://github.com/anlavandier/py2vtk/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/anlavandier/py2vtk/actions?query=workflow%3Atests)
 
 Py2VTK is a low dependency module for exporting VTK files using Python for visualization/analysis in softwares like Paraview, VisIt or Mayavi.
 
