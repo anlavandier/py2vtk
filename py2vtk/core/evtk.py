@@ -137,14 +137,24 @@ def encodeData(data, format, level=0, compressor="zlib"):
     ----------
     data : array or list of arrays of tuple or arrays
         data to encode
-    format : str in {}
+
+    format : str in {'ascii', 'binary', 'raw'}
+        encoding format
+
+    level : int, optional
+        compression level
+
+    compressor : str in {'zlib', 'lzma'}
+        compression library
 
     Returns
     -------
     size : int
         size in bytes of the encoded data with the header
+
     encoded_data : bytes
         encoded data with header
+
     """
     is_vector_comp = isinstance(data, (tuple, list))
     if is_vector_comp:
@@ -166,7 +176,9 @@ def encodeData(data, format, level=0, compressor="zlib"):
         y = np.asfortranarray(y)
         z = np.asfortranarray(z)
 
-        xyz = np.empty((3,) + x.shape, dtype=x.dtype, order="F")
+        dtype = max(x.dtype, y.dtype, z.dtype)
+
+        xyz = np.empty((3,) + x.shape, dtype=dtype, order="F")
 
         xyz[0] = x
         xyz[1] = y
@@ -174,8 +186,8 @@ def encodeData(data, format, level=0, compressor="zlib"):
 
         xxyyzz = np.ravel(xyz, order="K")
 
-        raw_fmt = _get_byte_order_char() + str(xyz.size) + np_to_struct[x.dtype.name]
-        ascii_fmt = "%d" if np.issubdtype(xxyyzz.dtype, np.integer) else "%.18e"
+        raw_fmt = _get_byte_order_char() + str(xyz.size) + np_to_struct[dtype.name]
+        ascii_fmt = "%d" if np.issubdtype(dtype, np.integer) else "%.18e"
 
     else:
         x = data

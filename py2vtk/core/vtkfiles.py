@@ -522,7 +522,7 @@ class VtkFile:
             assert len(data) == 3
             ncomp = 3
             nelem = data[0].size
-            dtype = data[0].dtype.name
+            dtype = max(d.dtype for d in data).name
 
         else:
             assert isinstance(data, np.ndarray)
