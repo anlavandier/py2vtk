@@ -24,6 +24,8 @@
 # ***********************************************************************************
 """ High level API for serial VTK Files"""
 
+import warnings
+
 import numpy as np
 
 from ..core.vtkcells import (
@@ -36,6 +38,7 @@ from ..core.vtkcells import (
 from ..core.vtkfiles import (
     VtkFile,
     VtkImageData,
+    VtkPolyData,
     VtkRectilinearGrid,
     VtkStructuredGrid,
     VtkUnstructuredGrid,
@@ -45,6 +48,7 @@ from ..utilities.utils import _addDataToFile, _addFieldDataToFile
 __all__ = [
     "imageToVTK",
     "gridToVTK",
+    "polyDataToVTK",
     "pointsToVTK",
     "linesToVTK",
     "polyLinesToVTK",
@@ -214,13 +218,13 @@ def gridToVTK(
         name of the file without extension where data should be saved.
 
     x : array-like
-        x coordinate axis.
+        x coordinates of the points..
 
     y : array-like
-        y coordinate axis.
+        y coordinates of the points..
 
     z : array-like
-        z coordinate axis.
+        z coordinates of the points..
 
     start : tuple, optional
         start of this grid relative to a global grid.
@@ -346,6 +350,315 @@ def gridToVTK(
     # Close file
     w.save()
 
+    return w.getFileName()
+
+
+# ==============================================================================
+def polyDataToVTK(
+    path,
+    x,
+    y,
+    z,
+    vertices=None,
+    lines=None,
+    strips=None,
+    polys=None,
+    cellData=None,
+    pointData=None,
+    fieldData=None,
+    direct_format="ascii",
+    appended_format="raw",
+    compression=False,
+    compressor="zlib",
+    append=True,
+):
+    """
+    Write vertices, lines, strips and polygons as a VTK Polydata
+
+    Parameters
+    ----------
+    path : str
+        name of the file without extension where data should be saved.
+
+    x : array-like
+        x coordinates of the points.
+
+    y : array-like
+        y coordinates of the points.
+
+    z : array-like
+        z coordinates of the points.
+
+    vertices : array-like or None, optional
+        1-D array containing the index of the points which should be saved as vertices.
+
+    lines : 2-tuple of array-likes or list of array-likes or None, optional
+        If a 2-tuple or array-likes, should be (connectivity, offsets)
+        where connectivity should defines the points associated to each line and
+        offsets should define the index of the last point in each cell (here line).
+        If a list of array-likes, each element in the list should define the points associated
+        to each line.
+
+    strips : 2-tuple of array-likes or list of array-likes or None, optional
+        If a 2-tuple or array-likes, should be (connectivity, offsets)
+        where connectivity should defines the points associated to each strip and
+        offsets should define the index of the last point in each cell (here strip).
+        If a list of array-likes, each element in the list should define the points associated
+        to each strip.
+
+    polys : 2-tuple of array-likes or list of array-likes or None, optional
+        If a 2-tuple or array-likes, should be (connectivity, offsets)
+        where connectivity should defines the points associated to each polygon and
+        offsets should define the index of the last point in each cell (here polygon).
+        If a list of array-likes, each element in the list should define the points associated
+        to each polygon.
+
+    cellData : dict or 4-tuple of dicts, optional
+        dictionary containing cell centered data or tuple of 4 dictionaries,
+        one for each cell type (vertices, lines, strips and polys).
+        Keys should be the names of the data arrays.
+        Values should be arrays or 3-tuple of arrays.
+        Arrays must have the same dimensions in all directions and
+        must only contain scalar data.
+
+    pointData : dict, optional
+        dictionary containing node centered data.
+        Keys should be the names of the data arrays.
+        Values should be arrays or 3-tuple of arrays.
+        Arrays must have same dimension in each direction and
+        must contain only scalar data.
+
+    fieldData : dict, optional
+        dictionary with variables associated with the field.
+        Keys should be the names of the variable stored in each array.
+
+    direct_format : str in {'ascii', 'binary'}, default='ascii'
+        how the data that isn't appended will be encoded.
+        If ``'ascii'``, the data will be human readable,
+        if ``'binary'`` it will use base 64
+        and can be compressed. See ``compressor`` argument.
+
+    appended_format : str in {'raw', 'binary'}, default='raw'
+        how that appended data will be encoded.
+        If ``'raw'``, raw binary data will be written to file.
+        This is space efficient and supported by vtk but isn't
+        valid XML. If ``'binary'``, data will be encoded using base64
+        and can be compressed. See ``compressor`` argument.
+
+    compression : Bool or int, default=False
+        compression level of the binary data.
+        Can be ``True``, ``False`` or any integer in ``[-1, 9]`` included.
+        If ``True``, compression will be set to -1 and use the default
+        value of the compressor.
+
+    compressor: str in {'zlib', 'lzma'}, default='zlib'
+        compression library to use for the binary data.
+
+    append : bool, default=True
+        Whether to write the data in appended mode or not.
+
+    Returns
+    -------
+    str
+        Full path to saved file.
+
+    Notes
+    -----
+    While Vtk PolyData does support cell-centered data, the way it does is not
+    intuitive as the cell are numbered globally across each cell type and ordered in the following way:
+    verts, lines, polys and strips. On top of that, for what is still a mistery to me, cell data written in base64
+    is read improperly (despite being written properly) and shows wrong results in paraview and when read using the
+    python vtk library. For this reason, when provided with cell-centered data, this function will enforce 'raw'
+    as the appended format and 'ascii' as the direct format.
+
+    Warns
+    -----
+    UserWarning
+        If cellData is not None and the appended or direct format is binary.
+    """
+    assert x.size == y.size == z.size
+    npoints = x.size
+
+    nverts = 0
+    if vertices is not None:
+        nverts = len(vertices)
+        vertices_conn = np.array(vertices, dtype="int32")
+        vertices_off = np.arange(1, nverts + 1)
+
+    nlines = 0
+    if lines is not None:
+        if isinstance(lines, (tuple)):
+            assert len(lines) == 2
+            lines_conn, lines_off = lines
+            nlines = len(lines_off)
+        elif isinstance(lines, list):
+            nlines = len(lines)
+            lines_off = np.zeros(nlines, dtype="int32")
+            current_offset = 0
+            for i, line in enumerate(lines):
+                current_offset += len(line)
+                lines_off[i] = current_offset
+
+            lines_conn = np.concatenate(lines, dtype="int32")
+
+    nstrips = 0
+    if strips is not None:
+        if isinstance(strips, (tuple)):
+            assert len(strips) == 2
+            strips_conn, strips_off = strips
+            nstrips = len(strips_off)
+        elif isinstance(strips, list):
+            nstrips = len(strips)
+            strips_off = np.zeros(nstrips, dtype="int32")
+            current_offset = 0
+            for i, strip in enumerate(strips):
+                current_offset += len(strip)
+                strips_off[i] = current_offset
+
+            strips_conn = np.concatenate(strips, dtype="int32")
+
+    npolys = 0
+    if polys is not None:
+        if isinstance(polys, (tuple)):
+            assert len(polys) == 2
+            polys_conn, polys_off = polys
+            npolys = len(polys_off)
+        elif isinstance(polys, list):
+            npolys = len(polys)
+            polys_off = np.zeros(npolys, dtype="int32")
+            current_offset = 0
+            for i, poly in enumerate(polys):
+                current_offset += len(poly)
+                polys_off[i] = current_offset
+
+            polys_conn = np.concatenate(polys, dtype="int32")
+
+    if (
+        cellData is not None
+        and appended_format == "binary"
+        or direct_format == "binary"
+    ):
+        warnings.warn(
+            "Cell Data written in base64 will be improperly read by Paraview and the python vtk library.\n"
+            "Formats are set to 'raw' and 'ascii'"
+        )
+        direct_format = "ascii"
+        appended_format = "raw"
+
+    w = VtkFile(
+        path,
+        VtkPolyData,
+        direct_format=direct_format,
+        appended_format=appended_format,
+        compression=compression,
+        compressor=compressor,
+    )
+
+    w.openGrid()
+    w.openPiece(
+        npoints=npoints, nverts=nverts, nlines=nlines, nstrips=nstrips, npolys=npolys
+    )
+
+    w.openElement("Points")
+    w.addData("points", (x, y, z), append=append)
+    w.closeElement("Points")
+    w.openElement("Verts")
+    if nverts != 0:
+        w.addData("connectivity", data=vertices_conn, append=append)
+        w.addData("offsets", data=vertices_off, append=append)
+    w.closeElement("Verts")
+
+    w.openElement("Lines")
+    if nlines != 0:
+        w.addData("connectivity", data=lines_conn, append=append)
+        w.addData("offsets", data=lines_off, append=append)
+    w.closeElement("Lines")
+
+    w.openElement("Strips")
+    if nstrips != 0:
+        w.addData("connectivity", data=strips_conn, append=append)
+        w.addData("offsets", data=strips_off, append=append)
+    w.closeElement("Strips")
+
+    w.openElement("Polys")
+    if npolys != 0:
+        w.addData("connectivity", data=polys_conn, append=append)
+        w.addData("offsets", data=polys_off, append=append)
+    w.closeElement("Polys")
+
+    if isinstance(cellData, tuple):
+        # Cell data specified per cell type, extend with np.nan
+        # Cell are treated in the order of verts, lines, polys, strips according to
+        # this blog post https://narkive.com/hQoDBjCE.3 and testing on my end
+        assert len(cellData) == 4
+
+        celldata_verts, celldata_lines, celldata_strips, celldata_polys = cellData
+
+        cellData = {}
+
+        for name, data in celldata_verts:
+            if isinstance(data, tuple):
+                cellData[name] = tuple(
+                    np.concatenate([data_i, np.full(nlines + nstrips + npolys, np.nan)])
+                    for data_i in data
+                )
+            else:
+                cellData[name] = np.concatenate(
+                    [data, np.full(nlines + nstrips + npolys, np.nan)]
+                )
+
+        for name, data in celldata_lines:
+            if isinstance(data, tuple):
+                cellData[name] = tuple(
+                    np.concatenate(
+                        [
+                            np.full(nverts, np.nan),
+                            data_i,
+                            np.full(nstrips + npolys, np.nan),
+                        ]
+                    )
+                    for data_i in data
+                )
+            else:
+                cellData[name] = np.concatenate(
+                    [np.full(nverts, np.nan), data, np.full(nstrips + npolys, np.nan)]
+                )
+
+        for name, data in celldata_polys:
+            if isinstance(data, tuple):
+                cellData[name] = tuple(
+                    np.concatenate(
+                        [
+                            np.full(nverts + nlines, np.nan),
+                            data_i,
+                            np.full(nstrips, np.nan),
+                        ]
+                    )
+                    for data_i in data
+                )
+            else:
+                cellData[name] = np.concatenate(
+                    [np.full(nverts + nlines, np.nan), data, np.full(nstrips, np.nan)]
+                )
+
+        for name, data in celldata_strips:
+            if isinstance(data, tuple):
+                cellData[name] = tuple(
+                    np.concatenate([np.full(nverts + nlines + npolys, np.nan), data_i])
+                    for data_i in data
+                )
+            else:
+                cellData[name] = np.concatenate(
+                    [np.full(nverts + nlines + npolys, np.nan), data]
+                )
+
+    _addDataToFile(w, cellData=cellData, pointData=pointData, append=append)
+
+    w.closePiece()
+    _addFieldDataToFile(w, fieldData, append=append)
+    w.closeGrid()
+
+    w.save()
     return w.getFileName()
 
 
@@ -500,8 +813,7 @@ def linesToVTK(
         All arrays must have the same number of elements.
 
     pointData : dict, optional
-        dictionary with variables associated to each vertex.
-        Keys should be the names of the variable stored in each array.
+        dictionary containing node centered data.        Keys should be the names of the variable stored in each array.
         All arrays must have the same number of elements.
 
     fieldData : dict, optional
@@ -632,8 +944,7 @@ def polyLinesToVTK(
         All arrays must have the same number of elements.
 
     pointData : dict, optional
-        dictionary with variables associated to each vertex.
-        Keys should be the names of the variable stored in each array.
+        dictionary containing node centered data.        Keys should be the names of the variable stored in each array.
         All arrays must have the same number of elements.
 
     fieldData : dict, optional
@@ -775,18 +1086,19 @@ def unstructuredGridToVTK(
         Please check the VTK file format specification for allowed cell types.
 
     cellData : dict, optional
-        dictionary with variables associated to each cell.
-        Keys should be the names of the variable stored in each array.
+        dictionary containing cell centered data.        Keys should be the names of the variable stored in each array.
+        Values should be arrays or 3-tuple of arrays.
         All arrays must have the same number of elements.
 
     pointData : dict, optional
-        dictionary with variables associated to each vertex.
-        Keys should be the names of the variable stored in each array.
+        dictionary containing node centered data.        Keys should be the names of the variable stored in each array.
+        Values should be arrays or 3-tuple of arrays.
         All arrays must have the same number of elements.
 
     fieldData : dict, optional
         dictionary with variables associated with the field.
         Keys should be the names of the variable stored in each array.
+        Values should be arrays or 3-tuple of arrays.
 
     direct_format : str in {'ascii', 'binary'}, default='ascii'
         how the data that isn't appended will be encoded.
@@ -943,14 +1255,12 @@ def cylinderToVTK(
         The default is 16.
 
     cellData : dict, optional
-        dictionary with variables associated to each cell.
-        Keys should be the names of the variable stored in each array.
+        dictionary containing cell centered data.        Keys should be the names of the variable stored in each array.
         Arrays should have number of elements equal to
         ncells = npilars * nlayers.
 
     pointData : dict, optional
-        dictionary with variables associated to each vertex.
-        Keys should be the names of the variable stored in each array.
+        dictionary containing node centered data.        Keys should be the names of the variable stored in each array.
         Arrays should have number of elements equal to
         npoints = npilars * (nlayers + 1).
 
