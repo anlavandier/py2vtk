@@ -5,6 +5,7 @@ import pytest
 from utils_test import get_vtk_data
 from vtk import (
     vtkXMLImageDataReader,
+    vtkXMLPolyDataReader,
     vtkXMLRectilinearGridReader,
     vtkXMLStructuredGridReader,
     vtkXMLUnstructuredGridReader,
@@ -14,6 +15,7 @@ from py2vtk.core.vtkcells import VtkLine, VtkPolyLine, VtkTriangle, VtkVertex
 from py2vtk.core.vtkfiles import (
     VtkFile,
     VtkImageData,
+    VtkPolyData,
     VtkRectilinearGrid,
     VtkStructuredGrid,
     VtkUnstructuredGrid,
@@ -235,6 +237,108 @@ def test_structured_grid(compressor, compression, direct_format, appended_format
     assert vtk_field == [0]
     assert np.allclose(vtk_point, pointdata, atol=ATOL, rtol=RTOL)
     assert np.allclose(vtk_cell, celldata, atol=ATOL, rtol=RTOL)
+
+    os.remove(vtk_file.getFileName())
+
+
+@pytest.mark.serial
+@pytest.mark.parametrize("compressor", ["zlib", "lzma"])
+@pytest.mark.parametrize("compression", [True, False, 5])
+@pytest.mark.parametrize("direct_format", ["binary", "ascii"])
+@pytest.mark.parametrize("appended_format", ["binary", "raw"])
+def test_poly_data(compressor, compression, direct_format, appended_format):
+    filepath = "poly_data"
+
+    x = np.array([0, 0, 0, 1, 1, 1, 2, 2, 2, 2])
+    y = np.array([0, 1, 1, 0, 1, 1, 0, 0, 1, 1])
+    z = np.array([0, 0, 1, 0, 0, 1, 0, 1, 0, 1])
+
+    verts_conn = np.array([0])
+    verts_off = np.array([1])
+
+    lines_conn = np.array([1, 2])
+    lines_off = np.array([2])
+
+    strips_conn = np.array([3, 4, 5])
+    strips_off = np.array([3])
+
+    polys_conn = np.array([6, 7, 8, 9])
+    polys_off = np.array([4])
+
+    pointdata = np.random.random(size=10)
+
+    fielddata = np.array(0)
+
+    if compression is not False and appended_format == "raw":
+        with pytest.warns(UserWarning):
+            vtk_file = VtkFile(
+                filepath,
+                VtkPolyData,
+                direct_format=direct_format,
+                appended_format=appended_format,
+                compression=compression,
+                compressor=compressor,
+            )
+    else:
+        vtk_file = VtkFile(
+            filepath,
+            VtkPolyData,
+            direct_format=direct_format,
+            appended_format=appended_format,
+            compression=compression,
+            compressor=compressor,
+        )
+
+    vtk_file.openGrid()
+    vtk_file.openPiece(npoints=10, nverts=1, nlines=1, nstrips=1, npolys=1)
+
+    vtk_file.openElement("Points")
+    vtk_file.addData("points", (x, y, z), append=True)
+    vtk_file.closeElement("Points")
+
+    vtk_file.openElement("Verts")
+    vtk_file.addData("connectivity", data=verts_conn, append=False)
+    vtk_file.addData("offsets", data=verts_off, append=False)
+    vtk_file.closeElement("Verts")
+
+    vtk_file.openElement("Lines")
+    vtk_file.addData("connectivity", data=lines_conn, append=True)
+    vtk_file.addData("offsets", data=lines_off, append=True)
+    vtk_file.closeElement("Lines")
+
+    vtk_file.openElement("Strips")
+    vtk_file.addData("connectivity", data=strips_conn, append=False)
+    vtk_file.addData("offsets", data=strips_off, append=False)
+    vtk_file.closeElement("Strips")
+
+    vtk_file.openElement("Polys")
+    vtk_file.addData("connectivity", data=polys_conn, append=True)
+    vtk_file.addData("offsets", data=polys_off, append=True)
+    vtk_file.closeElement("Polys")
+
+    vtk_file.openData("Point", scalars="points")
+    vtk_file.addData("points", pointdata, append=False)
+    vtk_file.closeData("Point")
+
+    vtk_file.closePiece()
+
+    vtk_file.openData("Field")
+    vtk_file.addData("field", fielddata, append=False)
+    vtk_file.closeData("Field")
+
+    vtk_file.closeGrid()
+    vtk_file.save()
+
+    reader = vtkXMLPolyDataReader()
+
+    vtk_point, vtk_cell, vtk_field = get_vtk_data(
+        reader, vtk_file.getFileName(), cell=None
+    )
+
+    vtk_point = vtk_point.reshape(pointdata.shape, order="F")
+
+    assert vtk_field == [0]
+    assert np.allclose(vtk_point, pointdata, atol=ATOL, rtol=RTOL)
 
     os.remove(vtk_file.getFileName())
 
