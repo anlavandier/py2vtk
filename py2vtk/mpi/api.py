@@ -150,16 +150,19 @@ def parallelImageToVTK(
     cellData : dict, optional
         dictionary with variables associated to each cell.
         Keys should be the names of the variable stored in each array.
+        Values should be arrays or 3-tuple of arrays.
         All arrays must have the same number of elements.
 
     pointData : dict, optional
         dictionary with variables associated to each vertex.
         Keys should be the names of the variable stored in each array.
+        Values should be arrays or 3-tuple of arrays.
         All arrays must have the same number of elements.
 
     fieldData : dict, optional
         dictionary with variables associated with the field.
         Keys should be the names of the variable stored in each array.
+        Values should be arrays or 3-tuple of arrays.
 
     comm : MPI.Intracomm, default=MPI.COMM_WORLD
         Communicator.
@@ -296,13 +299,13 @@ def parallelRectilinearGridToVTK(
         also produce a parallel VTI file named ``filename.pvtr``.
 
     x : array-like
-        x coordinate axis.
+        x coordinates of the points..
 
     y : array-like
-        y coordinate axis.
+        y coordinates of the points..
 
     z : array-like
-        z coordinate axis.
+        z coordinates of the points..
 
     starts : dict or tuple
         If ``starts`` is a dictionnary, it should map each rank to its start.
@@ -319,16 +322,19 @@ def parallelRectilinearGridToVTK(
     cellData : dict, optional
         dictionary with variables associated to each cell.
         Keys should be the names of the variable stored in each array.
+        Values should be arrays or 3-tuple of arrays.
         All arrays must have the same number of elements.
 
     pointData : dict, optional
         dictionary with variables associated to each vertex.
         Keys should be the names of the variable stored in each array.
+        Values should be arrays or 3-tuple of arrays.
         All arrays must have the same number of elements.
 
     fieldData : dict, optional
         dictionary with variables associated with the field.
         Keys should be the names of the variable stored in each array.
+        Values should be arrays or 3-tuple of arrays.
 
     comm : MPI.Intracomm, default=MPI.COMM_WORLD
         Communicator.
@@ -470,13 +476,13 @@ def parallelStructuredGridToVTK(
         also produce a parallel VTI file named ``filename.pvts``.
 
     x : array-like
-        x coordinate axis.
+        x coordinates of the points..
 
     y : array-like
-        y coordinate axis.
+        y coordinates of the points..
 
     z : array-like
-        z coordinate axis.
+        z coordinates of the points..
 
     starts : dict or tuple
         If ``starts`` is a dictionnary, it should map each rank to its start.
@@ -493,16 +499,19 @@ def parallelStructuredGridToVTK(
     cellData : dict, optional
         dictionary with variables associated to each cell.
         Keys should be the names of the variable stored in each array.
+        Values should be arrays or 3-tuple of arrays.
         All arrays must have the same number of elements.
 
     pointData : dict, optional
         dictionary with variables associated to each vertex.
         Keys should be the names of the variable stored in each array.
+        Values should be arrays or 3-tuple of arrays.
         All arrays must have the same number of elements.
 
     fieldData : dict, optional
         dictionary with variables associated with the field.
         Keys should be the names of the variable stored in each array.
+        Values should be arrays or 3-tuple of arrays.
 
     comm : MPI.Intracomm, default=MPI.COMM_WORLD
         Communicator.
@@ -675,16 +684,19 @@ def parallelUnstructuredGridToVTK(
     cellData : dict, optional
         dictionary with variables associated to each cell.
         Keys should be the names of the variable stored in each array.
+        Values should be arrays or 3-tuple of arrays.
         All arrays must have the same number of elements.
 
     pointData : dict, optional
         dictionary with variables associated to each vertex.
         Keys should be the names of the variable stored in each array.
+        Values should be arrays or 3-tuple of arrays.
         All arrays must have the same number of elements.
 
     fieldData : dict, optional
         dictionary with variables associated with the field.
         Keys should be the names of the variable stored in each array.
+        Values should be arrays or 3-tuple of arrays.
 
     comm : MPI.Intracomm, default=MPI.COMM_WORLD
         Communicator.
