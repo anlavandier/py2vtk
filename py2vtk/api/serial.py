@@ -75,8 +75,10 @@ def imageToVTK(
 ):
     """
     Export data values as a rectangular image.
+
     Parameters
     ----------
+
     path : str
         name of the file without extension where data should be saved.
 
@@ -146,13 +148,16 @@ def imageToVTK(
 
     Returns
     -------
+
     str
         Full path to saved file.
 
     Notes
     -----
+
     At least, cellData or pointData must be present
     to infer the dimensions of the image.
+
     """
     assert cellData is not None or pointData is not None
 
@@ -212,19 +217,21 @@ def gridToVTK(
 ):
     """
     Write data values as a rectilinear or structured grid.
+
     Parameters
     ----------
+
     path : str
         name of the file without extension where data should be saved.
 
     x : array-like
-        x coordinates of the points..
+        x coordinates of the points.
 
     y : array-like
-        y coordinates of the points..
+        y coordinates of the points.
 
     z : array-like
-        z coordinates of the points..
+        z coordinates of the points.
 
     start : tuple, optional
         start of this grid relative to a global grid.
@@ -275,11 +282,13 @@ def gridToVTK(
 
     Returns
     -------
+
     str
         Full path to saved file.
 
     Notes
     -----
+
     Coordinates can be 1D or 3D depending if the grid should
     be saved as a rectilinear or logically structured grid,
     respectively.
@@ -290,6 +299,7 @@ def gridToVTK(
     with hexahedral cells.
     In both cases the arrays dimensions should be
     equal to the number of nodes of the grid.
+
     """
     nx = ny = nz = 0
 
@@ -377,6 +387,7 @@ def polyDataToVTK(
 
     Parameters
     ----------
+
     path : str
         name of the file without extension where data should be saved.
 
@@ -459,11 +470,13 @@ def polyDataToVTK(
 
     Returns
     -------
+
     str
         Full path to saved file.
 
     Notes
     -----
+
     While Vtk PolyData does support cell-centered data, the way it does is not
     intuitive as the cell are numbered globally across each cell type and ordered in the following way:
     verts, lines, polys and strips. On top of that, for what is still a mistery to me, cell data written in base64
@@ -473,6 +486,7 @@ def polyDataToVTK(
 
     Warns
     -----
+
     UserWarning
         If cellData is not None and the appended or direct format is binary.
     """
@@ -533,10 +547,8 @@ def polyDataToVTK(
 
             polys_conn = np.concatenate(polys, dtype="int32")
 
-    if (
-        cellData is not None
-        and appended_format == "binary"
-        or direct_format == "binary"
+    if cellData is not None and (
+        appended_format == "binary" or direct_format == "binary"
     ):
         warnings.warn(
             "Cell Data written in base64 will be improperly read by Paraview and the python vtk library.\n"
@@ -681,6 +693,7 @@ def pointsToVTK(
 
     Parameters
     ----------
+
     path : str
         name of the file without extension where data should be saved.
 
@@ -727,8 +740,10 @@ def pointsToVTK(
 
     Returns
     -------
+
     str
         Full path to saved file.
+
     """
 
     assert x.size == y.size == z.size
@@ -793,6 +808,7 @@ def linesToVTK(
 ):
     """
     Export line segments that joint 2 points and associated data.
+
     Parameters
     ----------
     path : str
@@ -847,14 +863,17 @@ def linesToVTK(
 
     Returns
     -------
+
     str
         Full path to saved file.
+
     Notes
     -----
+
     x, y, z are 1D arrays with coordinates of the vertex of the lines.
-    It is assumed that each line.
-    is defined by two points,
-    then the lenght of the arrays should be equal to 2 * number of lines.
+    It is assumed that each line is defined by two points,
+    then the length of the arrays should be equal to 2 * number of lines.
+
     """
     assert x.size == y.size == z.size
     assert x.size % 2 == 0
@@ -923,6 +942,7 @@ def polyLinesToVTK(
 
     Parameters
     ----------
+
     path : str
         name of the file without extension where data should be saved.
 
@@ -978,8 +998,10 @@ def polyLinesToVTK(
 
     Returns
     -------
+
     str
         Full path to saved file.
+
     """
     assert x.size == y.size == z.size
     npoints = x.size
@@ -1054,6 +1076,7 @@ def unstructuredGridToVTK(
 
     Parameters
     ----------
+
     path : str
         name of the file without extension where data should be saved.
 
@@ -1136,8 +1159,10 @@ def unstructuredGridToVTK(
 
     Returns
     -------
+
     str
         Full path to saved file.
+
     """
     assert x.size == y.size == z.size
     npoints = x.size
@@ -1228,6 +1253,7 @@ def cylinderToVTK(
 
     Parameters
     ----------
+
     path : str
         name of the file without extension where data should be saved.
 
@@ -1295,13 +1321,17 @@ def cylinderToVTK(
 
     Returns
     -------
+
     str
         Full path to saved file.
+
     Notes
     -----
+
     This function only export vertical shapes for now.
     However, it should be easy to
     rotate the cylinder to represent other orientations.
+
     """
     # Define x, y coordinates from polar coordinates.
     dpi = 2.0 * np.pi / npilars
