@@ -9,6 +9,7 @@ from ..api.parallel import (
     writeParallelVTKUnstructuredGrid,
 )
 from ..api.serial import gridToVTK, imageToVTK, unstructuredGridToVTK
+from ..utilities.utils import get_data_info
 
 __all__ = [
     "parallelImageToVTK",
@@ -19,49 +20,6 @@ __all__ = [
 
 
 # Helper functions
-def get_data_info(cellData=None, pointData=None):
-    """
-    List the dtypes and number of components of
-    the arrays in cell_data and point_data.
-    Parameters
-    ----------
-    cellData : dict or None
-        cell-centered data
-
-    pointData : dict or None
-        point-centered data
-
-    Retuns
-    ------
-    cellData_info : dict
-        Dtype and number of components of the cell centered data
-
-    pointData_info : dict
-        Dtype and number of components of the cell centered data
-    """
-    if cellData is None:
-        cellData = {}
-    if pointData is None:
-        pointData = {}
-
-    pointData_info = {}
-    cellData_info = {}
-
-    for name, data in cellData.items():
-        if isinstance(data, tuple):
-            cellData_info[name] = (data[0].dtype, 3)
-        else:
-            cellData_info[name] = (data.dtype, 1)
-
-    for name, data in pointData.items():
-        if isinstance(data, tuple):
-            pointData_info[name] = (data[0].dtype, 3)
-        else:
-            pointData_info[name] = (data.dtype, 1)
-
-    return cellData_info, pointData_info
-
-
 def _gather_starts_ends(local_start, local_end, comm):
     """
     Gather all of the local starts and ends on the root process of the communicator.
@@ -264,6 +222,7 @@ def parallelImageToVTK(
             sources=[path_base + f".{rank}.vti" for rank in range(size)],
             cellData=cellData_info,
             pointData=pointData_info,
+            fieldData=fieldData,
             ghostlevel=ghostlevel,
         )
 
@@ -441,6 +400,7 @@ def parallelRectilinearGridToVTK(
             sources=[path_base + f".{rank}.vtr" for rank in range(size)],
             cellData=cellData_info,
             pointData=pointData_info,
+            fieldData=fieldData,
             ghostlevel=ghostlevel,
         )
 
@@ -618,6 +578,7 @@ def parallelStructuredGridToVTK(
             sources=[path_base + f".{rank}.vts" for rank in range(size)],
             cellData=cellData_info,
             pointData=pointData_info,
+            fieldData=fieldData,
             ghostlevel=ghostlevel,
         )
 
@@ -769,5 +730,6 @@ def parallelUnstructuredGridToVTK(
             sources=[path_base + f".{rank}.vtu" for rank in range(size)],
             cellData=cellData_info,
             pointData=pointData_info,
+            fieldData=fieldData,
             ghostlevel=ghostlevel,
         )
