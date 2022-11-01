@@ -15,4 +15,4 @@ __pycache__/
 *.pvts
 
 # Sphinx build dir
-doc/build/
+docs/build/
