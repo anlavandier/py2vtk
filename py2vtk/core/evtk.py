@@ -99,6 +99,26 @@ def _get_byte_order_char():
 def compress(array, level, compress_func):
     """
     Compress an array with a compressor. Taken from uvw, https://github.com/prs513rosewood/uvw
+
+    Parameters
+    ----------
+
+    array : ndarray
+        data to compress
+
+    level : int
+        Level of compression. Its meaning depends on the ``compressor`` argument
+
+    compress_func : callable
+        Compression function. Should take at least an a bytes arrays and an integer as argument
+
+    Returns
+    -------
+    header, compressed_data : bytes, b string
+        ``header`` is the header of the compressed data. In the case of VTK, this follows the convention described here
+        (https://vtk.org/Wiki/VTK_XML_Formats#Compressed_Data).
+        ``compressed_data`` is the string made by joining all of the blocks.
+
     """
     assert level != 0
 
