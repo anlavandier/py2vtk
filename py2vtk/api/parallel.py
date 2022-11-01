@@ -9,7 +9,7 @@ from ..core.vtkfiles import (
     VtkPStructuredGrid,
     VtkPUnstructuredGrid,
 )
-from ..utilities.utils import _addDataToParallelFile
+from ..utilities.utils import _addDataToParallelFile, _addFieldDataToParallelFile
 
 __all__ = [
     "writeParallelVTKImageData",
@@ -31,6 +31,8 @@ def writeParallelVTKImageData(
     ghostlevel=0,
     cellData=None,
     pointData=None,
+    fieldData=None,
+    format="binary",
 ):
     """
     Writes a parallel vtk file from grid-like data:
@@ -77,6 +79,10 @@ def writeParallelVTKImageData(
         containing cell centered data.
         Keys shoud be the names of the arrays.
         Values are (dtype, number of components)
+
+    fieldData : dict, optional
+        dictionary with variables associated with the field.
+        Keys should be the names of the variable stored in each array.
     """
     # Check that every source as a start and an end
     assert len(starts) == len(ends) == len(sources)
@@ -91,7 +97,7 @@ def writeParallelVTKImageData(
             f"Sources must be VTKImageData ('.vti') and not {common_ext} files"
         )
 
-    w = VtkParallelFile(path, VtkPImageData)
+    w = VtkParallelFile(path, VtkPImageData, format=format)
     start = (0, 0, 0)
 
     if dimension is None:
@@ -110,6 +116,8 @@ def writeParallelVTKImageData(
     for start_source, end_source, source in zip(starts, ends, sources):
         w.addPiece(source, start_source, end_source)
 
+    _addFieldDataToParallelFile(w, fieldData=fieldData)
+
     w.closeGrid()
     w.save()
 
@@ -127,6 +135,8 @@ def writeParallelVTKGrid(
     ghostlevel=0,
     cellData=None,
     pointData=None,
+    fieldData=None,
+    format="binary",
 ):
     """
     Writes a parallel vtk file from grid-like data:
@@ -166,6 +176,9 @@ def writeParallelVTKGrid(
         Keys shoud be the names of the arrays.
         Values are (dtype, number of components)
 
+    fieldData : dict, optional
+        dictionary with variables associated with the field.
+        Keys should be the names of the variable stored in each array.
     """
     # Check that every source as a start and an end
     assert len(starts) == len(ends) == len(sources)
@@ -185,7 +198,7 @@ def writeParallelVTKGrid(
             "This functions is meant to work only with VTK Structured grids and VTK Rectilinear grids"
         )
 
-    w = VtkParallelFile(path, ftype)
+    w = VtkParallelFile(path, ftype, format=format)
     start = (0, 0, 0)
     dtype = coordsDtype
     if dimension is None:
@@ -197,17 +210,19 @@ def writeParallelVTKGrid(
 
     if is_Rect:
         w.openElement("PCoordinates")
-        w.addData("x_coordinates", dtype=dtype, ncomp=1)
-        w.addData("y_coordinates", dtype=dtype, ncomp=1)
-        w.addData("z_coordinates", dtype=dtype, ncomp=1)
+        w.addPData("x_coordinates", dtype=dtype, ncomp=1)
+        w.addPData("y_coordinates", dtype=dtype, ncomp=1)
+        w.addPData("z_coordinates", dtype=dtype, ncomp=1)
         w.closeElement("PCoordinates")
     else:
         w.openElement("PPoints")
-        w.addData("points", dtype=dtype, ncomp=3)
+        w.addPData("points", dtype=dtype, ncomp=3)
         w.closeElement("PPoints")
 
     for start_source, end_source, source in zip(starts, ends, sources):
         w.addPiece(source, start_source, end_source)
+
+    _addFieldDataToParallelFile(w, fieldData=fieldData)
 
     w.closeGrid()
     w.save()
@@ -222,6 +237,8 @@ def writeParallelVTKPolyData(
     ghostlevel=0,
     cellData=None,
     pointData=None,
+    fieldData=None,
+    format="binary",
 ):
     """
     Writes a parallel VTK PolyData.
@@ -252,6 +269,9 @@ def writeParallelVTKPolyData(
         Keys shoud be the names of the arrays.
         Values are (dtype, number of components)
 
+    fieldData : dict, optional
+        dictionary with variables associated with the field.
+        Keys should be the names of the variable stored in each array.
     """
     # Get the extension + check that it's consistent accros all source files
     common_ext = sources[0].split(".")[-1]
@@ -262,17 +282,19 @@ def writeParallelVTKPolyData(
             f"Sources must be VTKPolyData ('.vtp') and not {common_ext} files"
         )
 
-    w = VtkParallelFile(path, VtkPPolyData)
+    w = VtkParallelFile(path, VtkPPolyData, format=format)
 
     w.openGrid(ghostlevel=ghostlevel)
 
     w.openElement("PPoints")
-    w.addData("points", dtype=coordsDtype, ncomp=3)
+    w.addPData("points", dtype=coordsDtype, ncomp=3)
     w.closeElement("PPoints")
     _addDataToParallelFile(w, cellData=cellData, pointData=pointData)
 
     for source in sources:
         w.addPiece(source)
+
+    _addFieldDataToParallelFile(w, fieldData=fieldData)
 
     w.closeGrid()
     w.save()
@@ -281,7 +303,14 @@ def writeParallelVTKPolyData(
 
 # ==============================================================================
 def writeParallelVTKUnstructuredGrid(
-    path, coordsdtype, sources, ghostlevel=0, cellData=None, pointData=None
+    path,
+    coordsDtype,
+    sources,
+    ghostlevel=0,
+    cellData=None,
+    pointData=None,
+    fieldData=None,
+    format="binary",
 ):
     """
     Writes a parallel VTK Unstructured Grid
@@ -312,6 +341,10 @@ def writeParallelVTKUnstructuredGrid(
         containing cell centered data.
         Keys shoud be the names of the arrays.
         Values are (dtype, number of components)
+
+    fieldData : dict, optional
+        dictionary with variables associated with the field.
+        Keys should be the names of the variable stored in each array.
     """
     # Get the extension + check that it's consistent accros all source files
     common_ext = sources[0].split(".")[-1]
@@ -321,17 +354,19 @@ def writeParallelVTKUnstructuredGrid(
             f"Sources must be VTKUnstructuredGrid ('.vtu') and not {common_ext} files"
         )
 
-    w = VtkParallelFile(path, VtkPUnstructuredGrid)
+    w = VtkParallelFile(path, VtkPUnstructuredGrid, format=format)
     w.openGrid(ghostlevel=ghostlevel)
 
     _addDataToParallelFile(w, cellData=cellData, pointData=pointData)
 
     w.openElement("PPoints")
-    w.addData("points", dtype=coordsdtype, ncomp=3)
+    w.addPData("points", dtype=coordsDtype, ncomp=3)
     w.closeElement("PPoints")
 
     for source in sources:
         w.addPiece(source=source)
+
+    _addFieldDataToParallelFile(w, fieldData=fieldData)
 
     w.closeGrid()
     w.save()
