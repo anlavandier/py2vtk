@@ -829,7 +829,8 @@ def linesToVTK(
         All arrays must have the same number of elements.
 
     pointData : dict, optional
-        dictionary containing node centered data.        Keys should be the names of the variable stored in each array.
+        dictionary containing node centered data.
+        Keys should be the names of the variable stored in each array.
         All arrays must have the same number of elements.
 
     fieldData : dict, optional
@@ -1061,6 +1062,8 @@ def unstructuredGridToVTK(
     connectivity,
     offsets,
     cell_types,
+    faces=None,
+    faceoffsets=None,
     cellData=None,
     pointData=None,
     fieldData=None,
@@ -1106,15 +1109,26 @@ def unstructuredGridToVTK(
         It should have size nelem.
         This should be assigned from evtk.vtk.VtkXXXX.tid, where XXXX represent
         the type of cell.
-        Please check the VTK file format specification for allowed cell types.
+        Please check the VTK file format specification or py2vtk.core.vtkcells for allowed cell types.
+
+    faces : array_like or None, optional
+        1D integer array describing the faces of polyhedric cells.
+        This is only required and used if there are polyhedra in the grid (cell id 42).
+        When used it is expected to be formatted in the following way for each polyhedron:
+        Number of faces, Number of points in face 0, first point of face 0, ... and so on.
+
+    faceoffsets : array_like or None, optional
+        1D integer array with the index of the last vertex of each polyhedron in the faces array.
 
     cellData : dict, optional
-        dictionary containing cell centered data.        Keys should be the names of the variable stored in each array.
+        dictionary containing cell centered data.
+        Keys should be the names of the variable stored in each array.
         Values should be arrays or 3-tuple of arrays.
         All arrays must have the same number of elements.
 
     pointData : dict, optional
-        dictionary containing node centered data.        Keys should be the names of the variable stored in each array.
+        dictionary containing node centered data.
+        Keys should be the names of the variable stored in each array.
         Values should be arrays or 3-tuple of arrays.
         All arrays must have the same number of elements.
 
@@ -1198,6 +1212,12 @@ def unstructuredGridToVTK(
                     f" {n_points_type_0} points were expected but {offsets[i]} were given"
                 )
 
+        if 42 in cell_types:
+            if faces is None or faceoffsets is None:
+                raise ValueError(
+                    "Polyhedric cells (cell id 42) require both faces and faces_offsets"
+                )
+
     w = VtkFile(
         path,
         VtkUnstructuredGrid,
@@ -1217,6 +1237,9 @@ def unstructuredGridToVTK(
     w.addData("connectivity", connectivity, append=append)
     w.addData("offsets", offsets, append=append)
     w.addData("types", cell_types, append=append)
+    if faces is not None and faceoffsets is not None:
+        w.addData("faces", faces, append=append)
+        w.addData("faceoffsets", faceoffsets, append=append)
     w.closeElement("Cells")
 
     _addDataToFile(w, cellData=cellData, pointData=pointData, append=append)
@@ -1281,12 +1304,14 @@ def cylinderToVTK(
         The default is 16.
 
     cellData : dict, optional
-        dictionary containing cell centered data.        Keys should be the names of the variable stored in each array.
+        dictionary containing cell centered data.
+        Keys should be the names of the variable stored in each array.
         Arrays should have number of elements equal to
         ncells = npilars * nlayers.
 
     pointData : dict, optional
-        dictionary containing node centered data.        Keys should be the names of the variable stored in each array.
+        dictionary containing node centered data.
+        Keys should be the names of the variable stored in each array.
         Arrays should have number of elements equal to
         npoints = npilars * (nlayers + 1).
 
