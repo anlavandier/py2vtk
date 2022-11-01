@@ -107,7 +107,7 @@ def compress(array, level, compress_func):
         data to compress
 
     level : int
-        Level of compression. Its meaning depends on the ``compressor`` argument
+        Level of compression. Its meaning depends on the ``compress_func`` argument
 
     compress_func : callable
         Compression function. Should take at least an a bytes arrays and an integer as argument
