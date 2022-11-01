@@ -20,6 +20,7 @@ install_requires = [
 extras_require = {
     "tests": ["pytest", "vtk", "mpi4py"],
     "mpi": ["mpi4py"],
+    "doc": ["sphinx", "sphinx-rtd-theme"],
 }
 
 setup(
