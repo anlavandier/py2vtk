@@ -26,7 +26,13 @@ import numpy as np
 
 from ..core.vtkfiles import VtkFile, VtkParallelFile
 
-__all__ = ["_addDataToFile", "_addFieldDataToFile", "_addDataToParallelFile"]
+__all__ = [
+    "_addDataToFile",
+    "_addFieldDataToFile",
+    "_addDataToParallelFile",
+    "_addFieldDataToParallelFile",
+    "get_data_info",
+]
 
 
 def _addDataToFile(vtkFile, cellData=None, pointData=None, append=True):
@@ -61,6 +67,7 @@ def _addDataToFile(vtkFile, cellData=None, pointData=None, append=True):
 
 
 def _addFieldDataToFile(vtkFile, fieldData=None, append=True):
+    assert isinstance(vtkFile, VtkFile)
     # Field data
     # https://www.visitusers.org/index.php?title=Time_and_Cycle_in_VTK_files#XML_VTK_files
     if fieldData:
@@ -81,7 +88,7 @@ def _addDataToParallelFile(vtkParallelFile, cellData, pointData):
         vtkParallelFile.openData("PPoint", scalars=scalars, vectors=vectors)
         for key in keys:
             dtype, ncomp = pointData[key]
-            vtkParallelFile.addData(key, dtype=dtype, ncomp=ncomp)
+            vtkParallelFile.addPData(key, dtype=dtype, ncomp=ncomp)
         vtkParallelFile.closeData("PPoint")
 
     # Cell data
@@ -93,5 +100,59 @@ def _addDataToParallelFile(vtkParallelFile, cellData, pointData):
         vtkParallelFile.openData("PCell", scalars=scalars, vectors=vectors)
         for key in keys:
             dtype, ncomp = cellData[key]
-            vtkParallelFile.addData(key, dtype=dtype, ncomp=ncomp)
+            vtkParallelFile.addPData(key, dtype=dtype, ncomp=ncomp)
         vtkParallelFile.closeData("PCell")
+
+
+def _addFieldDataToParallelFile(vtkParallelFile, fieldData=None):
+    assert isinstance(vtkParallelFile, VtkParallelFile)
+    # Field data
+    # https://www.visitusers.org/index.php?title=Time_and_Cycle_in_VTK_files#XML_VTK_files
+    if fieldData:
+        vtkParallelFile.openData("Field")  # no attributes in FieldData
+        for key, data in fieldData.items():
+            vtkParallelFile.addData(key, data)
+        vtkParallelFile.closeData("Field")
+
+
+def get_data_info(cellData=None, pointData=None):
+    """
+    List the dtypes and number of components of
+    the arrays in cell_data and point_data.
+    Parameters
+    ----------
+    cellData : dict or None
+        cell-centered data
+
+    pointData : dict or None
+        point-centered data
+
+    Retuns
+    ------
+    cellData_info : dict
+        Dtype and number of components of the cell-centered data
+
+    pointData_info : dict
+        Dtype and number of components of the point-centered data
+    """
+    if cellData is None:
+        cellData = {}
+    if pointData is None:
+        pointData = {}
+
+    pointData_info = {}
+    cellData_info = {}
+
+    for name, data in cellData.items():
+        if isinstance(data, tuple):
+            cellData_info[name] = (data[0].dtype, 3)
+        else:
+            cellData_info[name] = (data.dtype, 1)
+
+    for name, data in pointData.items():
+        if isinstance(data, tuple):
+            pointData_info[name] = (data[0].dtype, 3)
+        else:
+            pointData_info[name] = (data.dtype, 1)
+
+    return cellData_info, pointData_info
