@@ -539,7 +539,8 @@ class VtkFile:
             If a tuple, the individual arrays must represent the components
             of a vector field.
             All arrays must be one dimensional or three-dimensional.
-        format : str in {"appended", "ascii", "binary"}
+        append : bool, default=True
+            If True, the data is going to be written in the appended section.
 
         """
         if isinstance(data, (tuple, list)):
@@ -605,8 +606,8 @@ class VtkFile:
 
         data : array-like
             one numpy array or a tuple with 3 numpy arrays.
-            If a tuple, the individual
-            arrays must represent the components of a vector field.
+            If a tuple, the individual arrays must represent
+            the components of a vector field.
             All arrays must be one dimensional or three-dimensional.
             The order of the arrays must coincide with
             the numbering scheme of the grid.

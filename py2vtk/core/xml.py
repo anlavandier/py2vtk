@@ -144,7 +144,7 @@ class XmlWriter:
         newline : bool, default=False
             If True, adds a ">" and newline after adding all of the attributes.
 
-        **kwargs : dict
+        kwargs : dict
             keys as attribute names.
 
         Returns

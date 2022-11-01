@@ -40,6 +40,7 @@ def writeParallelVTKImageData(
 
     Parameters
     ----------
+
     path : str
         name of the file without extension.
 
@@ -83,6 +84,7 @@ def writeParallelVTKImageData(
     fieldData : dict, optional
         dictionary with variables associated with the field.
         Keys should be the names of the variable stored in each array.
+
     """
     # Check that every source as a start and an end
     assert len(starts) == len(ends) == len(sources)
@@ -144,6 +146,7 @@ def writeParallelVTKGrid(
 
     Parameters
     ----------
+
     path : str
         name of the file without extension.
 
@@ -179,6 +182,7 @@ def writeParallelVTKGrid(
     fieldData : dict, optional
         dictionary with variables associated with the field.
         Keys should be the names of the variable stored in each array.
+
     """
     # Check that every source as a start and an end
     assert len(starts) == len(ends) == len(sources)
@@ -245,6 +249,7 @@ def writeParallelVTKPolyData(
 
     Parameters
     ----------
+
     path : str
         name of the file without extension.
 
@@ -272,6 +277,7 @@ def writeParallelVTKPolyData(
     fieldData : dict, optional
         dictionary with variables associated with the field.
         Keys should be the names of the variable stored in each array.
+
     """
     # Get the extension + check that it's consistent accros all source files
     common_ext = sources[0].split(".")[-1]
@@ -317,6 +323,7 @@ def writeParallelVTKUnstructuredGrid(
 
     Parameters
     ----------
+
     path : str
         name of the file without extension.
 
@@ -345,6 +352,7 @@ def writeParallelVTKUnstructuredGrid(
     fieldData : dict, optional
         dictionary with variables associated with the field.
         Keys should be the names of the variable stored in each array.
+
     """
     # Get the extension + check that it's consistent accros all source files
     common_ext = sources[0].split(".")[-1]
