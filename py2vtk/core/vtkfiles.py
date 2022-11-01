@@ -655,7 +655,7 @@ class VtkParallelFile:
     ftype : VtkParallelFileType
     """
 
-    def __init__(self, filepath, ftype):
+    def __init__(self, filepath, ftype, format="binary"):
         assert isinstance(ftype, VtkParallelFileType)
         self.ftype = ftype
         self.filename = filepath + ftype.ext
@@ -667,6 +667,9 @@ class VtkParallelFile:
             header_type="UInt64",
         )
         self.isOpen = True
+
+        assert format in ["binary", "ascii"]
+        self.format = format
 
     def getFileName(self):
         """Return absolute path to this file."""
@@ -832,7 +835,7 @@ class VtkParallelFile:
         """
         self.xml.closeElement(self.ftype.name)
 
-    def addData(self, name, dtype, ncomp):
+    def addPData(self, name, dtype, ncomp):
         """
         Add data array to the parallel vtk file.
 
@@ -859,6 +862,55 @@ class VtkParallelFile:
             type=dtype.name,
         )
         self.xml.closeElement()
+
+    def addData(self, name, data):
+        """
+        Add array description to xml header section and
+        writes the array directly
+
+        Parameters
+        ----------
+        name : str
+            data array name.
+        data : array-like
+            one numpy array or a tuple with 3 numpy arrays.
+            If a tuple, the individual arrays must represent the components
+            of a vector field.
+            All arrays must be one dimensional or three-dimensional.
+        """
+        if isinstance(data, (tuple, list)):
+            assert len(data) == 3
+            ncomp = 3
+            nelem = data[0].size
+            dtype = max(d.dtype for d in data).name
+
+        else:
+            assert isinstance(data, np.ndarray)
+            ncomp = 1
+            nelem = data.size
+            dtype = data.dtype.name
+
+        dtype = np_to_vtk[dtype]
+
+        self.xml.openElement("DataArray")
+
+        self.xml.addAttributes(
+            newline=True,
+            Name=name,
+            type=dtype.name,
+            NumberOfComponents=ncomp,
+            NumberOfTuples=nelem,
+            format=self.format,
+        )
+        _, encoded_data = encodeData(
+            data,
+            self.format,
+            level=0,
+            compressor="zlib",
+        )
+
+        self.xml.stream.write(encoded_data)
+        self.closeElement("DataArray")
 
     def openElement(self, tagName):
         """
