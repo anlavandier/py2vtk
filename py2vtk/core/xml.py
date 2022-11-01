@@ -31,14 +31,18 @@
 
 class XmlWriter:
     """
-    xml writer class.
+    Xml writer class.
+
     Parameters
     ----------
+
     filepath : str
         Path to the xml file.
+
     addDeclaration : bool, optional
         Whether to add the declaration.
         The default is True.
+
     """
 
     def __init__(self, filepath, addDeclaration=True):
@@ -49,16 +53,25 @@ class XmlWriter:
             self.addDeclaration()
 
     def close(self):
-        """Close the file."""
+        """
+        Close the file.
+
+        """
         assert not self.openTag
         self.stream.close()
 
     def addDeclaration(self):
-        """Add xml declaration."""
+        """
+        Add xml declaration.
+
+        """
         self.stream.write(b'<?xml version="1.0"?>')
 
     def openElement(self, tag):
-        """Open a new xml element."""
+        """
+        Open a new xml element.
+
+        """
         if self.openTag:
             self.stream.write(b">")
         st = f"\n{' '*len(self.current) * 2}<{tag}"
@@ -70,15 +83,20 @@ class XmlWriter:
     def closeElement(self, tag=None):
         """
         Close the current element.
+
         Parameters
         ----------
+
         tag : str, optional
             Tag of the element.
             The default is None.
+
         Returns
         -------
+
         XmlWriter
-            The XmlWriter itself for chained calles.
+            The XmlWriter itself for chained calls.
+
         """
         if tag:
             assert self.current.pop() == tag
@@ -96,14 +114,19 @@ class XmlWriter:
     def addText(self, text):
         """
         Add text.
+
         Parameters
         ----------
+
         text : str
             Text to add.
+
         Returns
         -------
+
         XmlWriter
-            The XmlWriter itself for chained calles.
+            The XmlWriter itself for chained calls.
+
         """
         if self.openTag:
             self.stream.write(b">\n")
@@ -114,16 +137,22 @@ class XmlWriter:
     def addAttributes(self, newline=False, **kwargs):
         """
         Add attributes.
+
         Parameters
         ----------
+
         newline : bool, default=False
             If True, adds a ">" and newline after adding all of the attributes.
-        **kwargs
+
+        **kwargs : dict
             keys as attribute names.
+
         Returns
         -------
+
         XmlWriter
             The XmlWriter itself for chained calls.
+
         """
         assert self.openTag
         for key in kwargs:
