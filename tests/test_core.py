@@ -3,7 +3,7 @@ import os
 import numpy as np
 import pytest
 from utils_test import get_vtk_data
-from vtk import (
+from vtkmodules.vtkIOXML import (
     vtkXMLImageDataReader,
     vtkXMLPolyDataReader,
     vtkXMLRectilinearGridReader,
