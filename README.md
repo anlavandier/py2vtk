@@ -13,9 +13,9 @@ Py2vtk borrows heavily from [PyEVTK](https://github.com/pyscience-projects/pyevt
 
 Py2vtk is still in development. Current and future features are listed below in no particular order:
 
-- [ ] Setting up github actions powered CI (**In progress**)
-- [ ] Finalization of a first "release" to make available via Pypi and Spack. (**In progress, waiting for CI to be completed**)
+- [x] Setting up github actions powered CI
+- [ ] Finalization of a first "release" to make available via Pypi and Spack. (**Pypi completed, Spack on hold until further notice**)
 - [x] Recreation of PyEvtk's API
 - [ ] Parallel API using mpi4py. (**80% Done**)
 - [ ] Support of Dask Arrays (**Not started yet**)
-- [ ] Add documentation using docstrings and `sphinx` (**Docstrings mostly written, `sphinx` integration not started**)
+- [ ] Add documentation using docstrings and `sphinx` (**Docstrings written, `sphinx` integration started**)
