@@ -6,15 +6,17 @@ from mpi4py import MPI
 from ..api.parallel import (
     writeParallelVTKGrid,
     writeParallelVTKImageData,
+    writeParallelVTKPolyData,
     writeParallelVTKUnstructuredGrid,
 )
-from ..api.serial import gridToVTK, imageToVTK, unstructuredGridToVTK
+from ..api.serial import gridToVTK, imageToVTK, polyDataToVTK, unstructuredGridToVTK
 from ..utilities.utils import get_data_info
 
 __all__ = [
     "parallelImageToVTK",
     "parallelRectilinearGridToVTK",
     "parallelStructuredGridToVTK",
+    "parallelPolyDataToVTK",
     "parallelUnstructuredGridToVTK",
 ]
 
@@ -80,6 +82,7 @@ def parallelImageToVTK(
 
     Parameters
     ----------
+
     path : str
         name of the file without extension  or rank specific numbering where data should be saved.
         Each rank will produce a file named ``filename + f".{rank}.vti"``. Rank 0 will
@@ -152,6 +155,7 @@ def parallelImageToVTK(
 
     append : bool, default=True
         Whether to write the data in appended mode or not.
+
     """
     rank = comm.Get_rank()
     size = comm.Get_size()
@@ -252,6 +256,7 @@ def parallelRectilinearGridToVTK(
 
     Parameters
     ----------
+
     path : str
         name of the file without extension  or rank specific numbering where data should be saved.
         Each rank will produce a file named ``filename + f".{rank}.vtr"``. Rank 0 will
@@ -325,6 +330,7 @@ def parallelRectilinearGridToVTK(
 
     append : bool, default=True
         Whether to write the data in appended mode or not.
+
     """
     if x.ndim == y.ndim == z.ndim == 3:
         raise ValueError(
@@ -402,6 +408,7 @@ def parallelRectilinearGridToVTK(
             pointData=pointData_info,
             fieldData=fieldData,
             ghostlevel=ghostlevel,
+            format=direct_format,
         )
 
 
@@ -430,6 +437,7 @@ def parallelStructuredGridToVTK(
 
     Parameters
     ----------
+
     path : str
         name of the file without extension  or rank specific numbering where data should be saved.
         Each rank will produce a file named ``filename + f".{rank}.vts"``. Rank 0 will
@@ -503,6 +511,7 @@ def parallelStructuredGridToVTK(
 
     append : bool, default=True
         Whether to write the data in appended mode or not.
+
     """
     if x.ndim == y.ndim == z.ndim == 1:
         raise ValueError(
@@ -580,6 +589,169 @@ def parallelStructuredGridToVTK(
             pointData=pointData_info,
             fieldData=fieldData,
             ghostlevel=ghostlevel,
+            format=direct_format,
+        )
+
+
+def parallelPolyDataToVTK(
+    path,
+    x,
+    y,
+    z,
+    vertices=None,
+    lines=None,
+    strips=None,
+    polys=None,
+    cellData=None,
+    pointData=None,
+    fieldData=None,
+    comm=MPI.COMM_WORLD,
+    ghostlevel=0,
+    direct_format="ascii",
+    appended_format="raw",
+    compression=False,
+    compressor="zlib",
+    append=True,
+):
+    """
+    Export one vtk polydata per rank
+    and one vtk parallel polydata on rank 0.
+
+    Parameters
+    ----------
+
+    path : str
+        name of the file without extension where data should be saved.
+
+    x : array-like
+        x coordinates of the points.
+
+    y : array-like
+        y coordinates of the points.
+
+    z : array-like
+        z coordinates of the points.
+
+    vertices : array-like or None, optional
+        1-D array containing the index of the points which should be saved as vertices.
+
+    lines : 2-tuple of array-likes or list of array-likes or None, optional
+        If a 2-tuple or array-likes, should be (connectivity, offsets)
+        where connectivity should defines the points associated to each line and
+        offsets should define the index of the last point in each cell (here line).
+        If a list of array-likes, each element in the list should define the points associated
+        to each line.
+
+    strips : 2-tuple of array-likes or list of array-likes or None, optional
+        If a 2-tuple or array-likes, should be (connectivity, offsets)
+        where connectivity should defines the points associated to each strip and
+        offsets should define the index of the last point in each cell (here strip).
+        If a list of array-likes, each element in the list should define the points associated
+        to each strip.
+
+    polys : 2-tuple of array-likes or list of array-likes or None, optional
+        If a 2-tuple or array-likes, should be (connectivity, offsets)
+        where connectivity should defines the points associated to each polygon and
+        offsets should define the index of the last point in each cell (here polygon).
+        If a list of array-likes, each element in the list should define the points associated
+        to each polygon.
+
+    cellData : dict or 4-tuple of dicts, optional
+        dictionary containing cell centered data or tuple of 4 dictionaries,
+        one for each cell type (vertices, lines, strips and polys).
+        Keys should be the names of the data arrays.
+        Values should be arrays or 3-tuple of arrays.
+        Arrays must have the same dimensions in all directions and
+        must only contain scalar data.
+
+    pointData : dict, optional
+        dictionary with variables associated to each vertex.
+        Keys should be the names of the variable stored in each array.
+        Values should be arrays or 3-tuple of arrays.
+        All arrays must have the same number of elements.
+
+    fieldData : dict, optional
+        dictionary with variables associated with the field.
+        Keys should be the names of the variable stored in each array.
+        Values should be arrays or 3-tuple of arrays.
+
+    comm : MPI.Intracomm, default=MPI.COMM_WORLD
+        Communicator.
+
+    ghotslevel : int default=0,
+        Number of cells which are shared between neighbouring files.
+
+    direct_format : str in {'ascii', 'binary'}, default='ascii'
+        how the data that isn't appended will be encoded.
+        If ``'ascii'``, the data will be human readable,
+        if ``'binary'`` it will use base 64
+        and can be compressed. See ``compressor`` argument.
+
+    appended_format : str in {'raw', 'binary'}, default='raw'
+        how that appended data will be encoded.
+        If ``'raw'``, raw binary data will be written to file.
+        This is space efficient and supported by vtk but isn't
+        valid XML. If ``'binary'``, data will be encoded using base64
+        and can be compressed. See ``compressor`` argument.
+
+    compression : Bool or int, default=False
+        compression level of the binary data.
+        Can be ``True``, ``False`` or any integer in ``[-1, 9]`` included.
+        If ``True``, compression will be set to -1 and use the default
+        value of the compressor.
+
+    compressor: str in {'zlib', 'lzma'}, default='zlib'
+        compression library to use for the binary data.
+
+    append : bool, default=True
+        Whether to write the data in appended mode or not.
+
+    Notes
+    -----
+
+    While Vtk PolyData does support cell-centered data, the way it does is not
+    intuitive as the cell are numbered globally across each cell type and ordered in the following way:
+    verts, lines, polys and strips. On top of that, for what is still a mistery to me, cell data written in base64
+    is read improperly (despite being written properly) and shows wrong results in paraview and when read using the
+    python vtk library. For this reason, when provided with cell-centered data, this function will enforce 'raw'
+    as the appended format and 'ascii' as the direct format.
+
+    """
+    rank = comm.Get_rank()
+    size = comm.Get_size()
+
+    polyDataToVTK(
+        path + f".{rank}",
+        x,
+        y,
+        z,
+        vertices=vertices,
+        lines=lines,
+        strips=strips,
+        polys=polys,
+        cellData=cellData,
+        pointData=pointData,
+        fieldData=fieldData,
+        direct_format=direct_format,
+        appended_format=appended_format,
+        compression=compression,
+        compressor=compressor,
+        append=append,
+    )
+
+    if rank == 0:
+        cellData_info, pointData_info = get_data_info(cellData, pointData)
+        coords_dtype = x.dtype
+        path_base = os.path.basename(path)
+        writeParallelVTKPolyData(
+            path,
+            coordsDtype=coords_dtype,
+            sources=[path_base + f".{rank}.vtp" for rank in range(size)],
+            cellData=cellData_info,
+            pointData=pointData_info,
+            fieldData=fieldData,
+            ghostlevel=ghostlevel,
+            format=direct_format,
         )
 
 
@@ -591,6 +763,8 @@ def parallelUnstructuredGridToVTK(
     connectivity,
     offsets,
     cell_types,
+    faces=None,
+    faceoffsets=None,
     cellData=None,
     pointData=None,
     fieldData=None,
@@ -609,6 +783,7 @@ def parallelUnstructuredGridToVTK(
 
     Parameters
     ----------
+
     path : str
         name of the file without extension  or rank specific numbering where data should be saved.
         Each rank will produce a file named ``filename + f".{rank}.vtu"``. Rank 0 will
@@ -640,7 +815,16 @@ def parallelUnstructuredGridToVTK(
         It should have size nelem.
         This should be filed using py2vtk.core.vtkcells.VtkXXXX.tid, where XXXX represent
         the type of cell.
-        Please check the VTK file format specification for allowed cell types.
+        Please check the VTK file format specification or py2vtk.core.vtkcells.py for allowed cell types.
+
+    faces : array_like or None, optional
+        1D integer array describing the faces of polyhedric cells.
+        This is only required and used if there are polyhedra in the grid (cell id 42).
+        When used it is expected to be formatted in the following way for each polyhedron:
+        Number of faces, Number of points in face 0, first point of face 0, ... and so on.
+
+    faceoffsets : array_like or None, optional
+        1D integer array with the index of the last vertex of each polyhedron in the faces array.
 
     cellData : dict, optional
         dictionary with variables associated to each cell.
@@ -697,6 +881,7 @@ def parallelUnstructuredGridToVTK(
         is coherent with their type.
         The understood cell types are listed in
         ``py2vtk.core.vtkcells.py``.
+
     """
     rank = comm.Get_rank()
     size = comm.Get_size()
@@ -709,6 +894,8 @@ def parallelUnstructuredGridToVTK(
         connectivity=connectivity,
         offsets=offsets,
         cell_types=cell_types,
+        faces=faces,
+        faceoffsets=faceoffsets,
         cellData=cellData,
         pointData=pointData,
         fieldData=fieldData,
@@ -732,4 +919,5 @@ def parallelUnstructuredGridToVTK(
             pointData=pointData_info,
             fieldData=fieldData,
             ghostlevel=ghostlevel,
+            format=direct_format,
         )
