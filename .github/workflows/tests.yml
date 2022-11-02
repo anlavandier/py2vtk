@@ -48,6 +48,7 @@ jobs:
       working-directory: ./pytest_dir
       run: |
         py.test .. -m "serial"
+        python ../mpi_tester.py .. -m "parallel"
 
     - name: Remove test directory
       run: |
