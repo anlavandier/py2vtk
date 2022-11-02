@@ -11,6 +11,7 @@ included in Py2VTK, describing what they are and what they do.
    :maxdepth: 1
 
    high-level
+   mpi_api
    vtkfiles
    evtk
    xml
