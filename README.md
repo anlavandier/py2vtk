@@ -14,9 +14,42 @@ Py2vtk borrows heavily from [PyEVTK](https://github.com/pyscience-projects/pyevt
 
 Py2vtk is still in development. Current and future features are listed below in no particular order:
 
+### Current and planned features
+
 - [x] Setting up github actions powered CI
-- [ ] Finalization of a first "release" to make available via Pypi and Spack. (**Pypi completed, Spack on hold until further notice**)
+- [x] Finalization of a first "release" to make available via Pypi and Spack. (**Pypi completed, Spack on hold until further notice**).
 - [x] Recreation of PyEvtk's API
-- [ ] Parallel API using mpi4py. (**80% Done**)
-- [ ] Support of Dask Arrays (**Not started yet**)
-- [ ] Add documentation using docstrings and `sphinx` (**Docstrings written, `sphinx` integration started**)
+- [x] Parallel API using mpi4py.
+- [ ] Support of Dask Arrays (**Not started yet**).
+- [x] Add documentation using docstrings and [`sphinx`](https://www.sphinx-doc.org/en/master/).
+
+## Installation
+
+This package is hosted in Pypi and can be installed with pip. There is currently 3 installation modes:
+
+- Standard install (does not feature the MPI-enabled API)
+
+  ```bash
+  python -m pip install py2vtk
+  ```
+
+- MPI Install
+
+  ```bash
+  python -m pip install py2vtk[mpi]
+  ```
+
+- Test install, needed to run the unit tests locally
+
+  ```bash
+  python -m pip install py2vtk[tests]
+  ```
+
+## Running tests
+
+To run the unit tests locally, use the following commands
+
+```bash
+py.test -m serial # Serial tests
+python mpi_tester.py . -m parallel # Parallel tests
+```
