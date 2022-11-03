@@ -35,6 +35,7 @@ setup(
     keywords="Visualization VTK",
     packages=packages + tests,
     long_description=open("README.md").read() if os.path.exists("README.md") else "",
+    long_description_content_type="text/markdown",
     python_requires=">=3.7",
     install_requires=install_requires,
     extras_require=extras_require,
