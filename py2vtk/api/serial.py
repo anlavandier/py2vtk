@@ -1,27 +1,28 @@
-# ***********************************************************************************
-# * Copyright 2010 - 2016 Paulo A. Herrera. All rights reserved.                    *
-# *                                                                                 *
-# * Redistribution and use in source and binary forms, with or without              *
-# * modification, are permitted provided that the following conditions are met:     *
-# *                                                                                 *
-# *  1. Redistributions of source code must retain the above copyright notice,      *
-# *  this list of conditions and the following disclaimer.                          *
-# *                                                                                 *
-# *  2. Redistributions in binary form must reproduce the above copyright notice,   *
-# *  this list of conditions and the following disclaimer in the documentation      *
-# *  and/or other materials provided with the distribution.                         *
-# *                                                                                 *
-# * THIS SOFTWARE IS PROVIDED BY PAULO A. HERRERA ``AS IS'' AND ANY EXPRESS OR      *
-# * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF    *
-# * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO      *
-# * EVENT SHALL <COPYRIGHT HOLDER> OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,        *
-# * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,  *
-# * BUT NOT LIMITED TO, PROCUREMEN OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,    *
-# * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY           *
-# * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING  *
-# * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS              *
-# * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.                    *
-# ***********************************************************************************
+# ******************************************************************************
+# * Copyright 2010 - 2016 Paulo A. Herrera. All rights reserved.               *
+# *                                                                            *
+# * Redistribution and use in source and binary forms, with or without         *
+# * modification, are permitted provided that the following conditions         *
+# * are met:                                                                   *
+# *                                                                            *
+# *  1. Redistributions of source code must retain the above copyright notice, *
+# *  this list of conditions and the following disclaimer.                     *
+# *                                                                            *
+# *  2. Redistributions in binary form must reproduce the above copyright      *
+# *  notice, this list of conditions and the following disclaimer in the       *
+# *  documentation and/or other materials provided with the distribution.      *
+# *                                                                            *
+# * THIS SOFTWARE IS PROVIDED BY PAULO A. HERRERA ``AS IS'' AND ANY EXPRESS OR *
+# * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES  *
+# * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN *
+# * NO EVENT SHALL <COPYRIGHT HOLDER> OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,*
+# * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES         *
+# * (INCLUDING, BUT NOT LIMITED TO, PROCUREMEN OF SUBSTITUTE GOODS OR SERVICES;*
+# * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND*
+# * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT *
+# * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF   *
+# * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.          *
+# ******************************************************************************
 """ High level API for serial VTK Files"""
 
 import warnings
@@ -35,7 +36,8 @@ from ..core.vtkcells import (
     VtkPolyLine,
     VtkVertex,
 )
-from ..core.vtkfiles import (
+from ..core.xml.utils import _addDataToFile, _addFieldDataToFile
+from ..core.xml.vtkfiles import (
     VtkFile,
     VtkImageData,
     VtkPolyData,
@@ -43,7 +45,6 @@ from ..core.vtkfiles import (
     VtkStructuredGrid,
     VtkUnstructuredGrid,
 )
-from ..utilities.utils import _addDataToFile, _addFieldDataToFile
 
 __all__ = [
     "imageToVTK",
@@ -314,7 +315,8 @@ def gridToVTK(
         ftype = VtkStructuredGrid
     else:
         raise ValueError(
-            f"x, y and z should have ndim == 3 or 1 but they have ndim of {x.ndim}, {y.ndim}"
+            f"x, y and z should have ndim == 3 or 1"
+            f" but they have ndim of {x.ndim}, {y.ndim}"
             f" and {z.ndim} respectively"
         )
 
@@ -401,28 +403,29 @@ def polyDataToVTK(
         z coordinates of the points.
 
     vertices : array-like or None, optional
-        1-D array containing the index of the points which should be saved as vertices.
+        1-D array containing the index of the points
+        which should be saved as vertices.
 
     lines : 2-tuple of array-likes or list of array-likes or None, optional
         If a 2-tuple or array-likes, should be (connectivity, offsets)
-        where connectivity should defines the points associated to each line and
-        offsets should define the index of the last point in each cell (here line).
-        If a list of array-likes, each element in the list should define the points associated
-        to each line.
+        where connectivity should defines the points associated to each line
+        and offsets should define the index of the last point in each cell
+        (here line). If a list of array-likes, each element in the list should
+        define the points associated to each line.
 
     strips : 2-tuple of array-likes or list of array-likes or None, optional
         If a 2-tuple or array-likes, should be (connectivity, offsets)
-        where connectivity should defines the points associated to each strip and
-        offsets should define the index of the last point in each cell (here strip).
-        If a list of array-likes, each element in the list should define the points associated
-        to each strip.
+        where connectivity should defines the points associated to each
+        strip and offsets should define the index of the last point in each
+        cell (here strip). If a list of array-likes, each element in the list
+        should define the points associated to each strip.
 
     polys : 2-tuple of array-likes or list of array-likes or None, optional
         If a 2-tuple or array-likes, should be (connectivity, offsets)
-        where connectivity should defines the points associated to each polygon and
-        offsets should define the index of the last point in each cell (here polygon).
-        If a list of array-likes, each element in the list should define the points associated
-        to each polygon.
+        where connectivity should defines the points associated to each
+        polygon and offsets should define the index of the last point in each
+        cell (here polygon). If a list of array-likes, each element in the
+        list should define the points associated to each polygon.
 
     cellData : dict or 4-tuple of dicts, optional
         dictionary containing cell centered data or tuple of 4 dictionaries,
@@ -478,11 +481,14 @@ def polyDataToVTK(
     -----
 
     While Vtk PolyData does support cell-centered data, the way it does is not
-    intuitive as the cell are numbered globally across each cell type and ordered in the following way:
-    verts, lines, polys and strips. On top of that, for what is still a mistery to me, cell data written in base64
-    is read improperly (despite being written properly) and shows wrong results in paraview and when read using the
-    python vtk library. For this reason, when provided with cell-centered data, this function will enforce 'raw'
-    as the appended format and 'ascii' as the direct format.
+    intuitive as the cell are numbered globally across each cell type and
+    ordered in the following way: verts, lines, polys and strips.
+    On top of that, for what is still a mistery to me,
+    cell data written in base64 is read improperly (despite being written
+    properly) and shows wrong results in paraview and when read using the
+    python vtk library. For this reason, when provided with cell-centered data,
+    this function will enforce 'raw' as the appended format and 'ascii'
+    as the direct format.
 
     Warns
     -----
@@ -551,8 +557,9 @@ def polyDataToVTK(
         appended_format == "binary" or direct_format == "binary"
     ):
         warnings.warn(
-            "Cell Data written in base64 will be improperly read by Paraview and the python vtk library.\n"
-            "Formats are set to 'raw' and 'ascii'"
+            "Cell Data written in base64 will be improperly read by Paraview "
+            " and the python vtk library.\n"
+            " Formats are set to 'raw' and 'ascii'"
         )
         direct_format = "ascii"
         appended_format = "raw"
@@ -600,11 +607,12 @@ def polyDataToVTK(
 
     if isinstance(cellData, tuple):
         # Cell data specified per cell type, extend with np.nan
-        # Cell are treated in the order of verts, lines, polys, strips according to
-        # this blog post https://narkive.com/hQoDBjCE.3 and testing on my end
+        # Cell are treated in the order of verts, lines, polys, strips
+        # according to this blog post https://narkive.com/hQoDBjCE.3 and
+        # testing on my end
         assert len(cellData) == 4
 
-        celldata_verts, celldata_lines, celldata_strips, celldata_polys = cellData
+        (celldata_verts, celldata_lines, celldata_strips, celldata_polys) = cellData
 
         cellData = {}
 
@@ -965,7 +973,8 @@ def polyLinesToVTK(
         All arrays must have the same number of elements.
 
     pointData : dict, optional
-        dictionary containing node centered data.        Keys should be the names of the variable stored in each array.
+        dictionary containing node centered data.
+        Keys should be the names of the variable stored in each array.
         All arrays must have the same number of elements.
 
     fieldData : dict, optional
@@ -1009,7 +1018,8 @@ def polyLinesToVTK(
     ncells = pointsPerLine.size
 
     # create some temporary arrays to write grid topology
-    offsets = np.zeros(ncells, dtype="int32")  # index of last node in each cell
+    # index of last node in each cell
+    offsets = np.zeros(ncells, dtype="int32")
     ii = 0
     for i in range(ncells):
         ii += pointsPerLine[i]
@@ -1109,16 +1119,20 @@ def unstructuredGridToVTK(
         It should have size nelem.
         This should be assigned from evtk.vtk.VtkXXXX.tid, where XXXX represent
         the type of cell.
-        Please check the VTK file format specification or py2vtk.core.vtkcells for allowed cell types.
+        Please check the VTK file format specification or py2vtk.core.vtkcells
+        for allowed cell types.
 
     faces : array_like or None, optional
         1D integer array describing the faces of polyhedric cells.
-        This is only required and used if there are polyhedra in the grid (cell id 42).
-        When used it is expected to be formatted in the following way for each polyhedron:
-        Number of faces, Number of points in face 0, first point of face 0, ... and so on.
+        This is only required and used if there are polyhedra in the
+        grid (cell id 42). When used it is expected to be formatted in the
+        following way for each polyhedron:
+        Number of faces, Number of points in face 0, first point of face 0,
+        ... and so on.
 
     faceoffsets : array_like or None, optional
-        1D integer array with the index of the last vertex of each polyhedron in the faces array.
+        1D integer array with the index of the last vertex of each polyhedron
+        in the faces array.
 
     cellData : dict, optional
         dictionary containing cell centered data.
@@ -1194,7 +1208,8 @@ def unstructuredGridToVTK(
         if n_points_type_0 != -1 and n_points_type_0 != offsets[0]:
             raise ValueError(
                 "Incorrect number of points in cell 0."
-                f"{n_points_type_0} points were expected but {offsets[0]} were given"
+                f"{n_points_type_0} points were expected"
+                f" but {offsets[0]} were given"
             )
         for i in range(1, ncells):
             n_points_type_i = Vtk_points_per_cell.get(cell_types[i])
@@ -1208,14 +1223,16 @@ def unstructuredGridToVTK(
                 offsets[i] - offsets[i - 1]
             ):
                 raise ValueError(
-                    "Incorrect number of points in cell 0."
-                    f" {n_points_type_0} points were expected but {offsets[i]} were given"
+                    "Incorrect number of points in cell 0. "
+                    f" {n_points_type_0} points were expected"
+                    f" but {offsets[i]} were given"
                 )
 
         if 42 in cell_types:
             if faces is None or faceoffsets is None:
                 raise ValueError(
-                    "Polyhedric cells (cell id 42) require both faces and faces_offsets"
+                    "Polyhedric cells (cell id 42) require"
+                    " both faces and faces_offsets"
                 )
 
     w = VtkFile(

@@ -1,7 +1,8 @@
 """ High level API for parallel VTK files"""
 import numpy as np
 
-from ..core.vtkfiles import (
+from ..core.xml.utils import _addDataToParallelFile, _addFieldDataToParallelFile
+from ..core.xml.vtkfiles import (
     VtkParallelFile,
     VtkPImageData,
     VtkPPolyData,
@@ -9,7 +10,6 @@ from ..core.vtkfiles import (
     VtkPStructuredGrid,
     VtkPUnstructuredGrid,
 )
-from ..utilities.utils import _addDataToParallelFile, _addFieldDataToParallelFile
 
 __all__ = [
     "writeParallelVTKImageData",
@@ -56,7 +56,8 @@ def writeParallelVTKImageData(
         dimension of the image.
 
     source : list
-        list of the relative paths of the source files where the actual data is found.
+        list of the relative paths of the source files where the
+        actual data is found.
 
     origin : tuple, optional
         grid origin.
@@ -162,7 +163,8 @@ def writeParallelVTKGrid(
         in each dimension
 
     source : list
-        list of the relative paths of the source files where the actual data is found.
+        list of the relative paths of the source files where the
+        actual data is found.
 
     ghostlevel : int, default=0
         Number of cells which are shared between neighbouring files.
@@ -199,7 +201,8 @@ def writeParallelVTKGrid(
         is_Rect = True
     else:
         raise ValueError(
-            "This functions is meant to work only with VTK Structured grids and VTK Rectilinear grids"
+            "This functions is meant to work only with VTK Structured grids"
+            " and VTK Rectilinear grids"
         )
 
     w = VtkParallelFile(path, ftype, format=format)
@@ -257,7 +260,8 @@ def writeParallelVTKPolyData(
         the dtype of the coordinates.
 
     source : list
-        list of the relative paths of the source files where the actual data is found.
+        list of the relative paths of the source files where the
+        actual data is found.
 
     ghostlevel : int, default=0
         Number of cells which are shared between neighbouring files.
@@ -331,7 +335,8 @@ def writeParallelVTKUnstructuredGrid(
         dtype of the coordinates.
 
     source : list
-        list of the relative paths of the source files where the actual data is found
+        list of the relative paths of the source files where the actual
+        data is found
 
     ghostlevel : int, optional
         Number of ghost-levels by which
@@ -359,7 +364,8 @@ def writeParallelVTKUnstructuredGrid(
     assert all(s.split(".")[-1] == common_ext for s in sources)
     if common_ext != "vtu":
         raise ValueError(
-            f"Sources must be VTKUnstructuredGrid ('.vtu') and not {common_ext} files"
+            f"Sources must be VTKUnstructuredGrid ('.vtu') and not {common_ext}"
+            " files"
         )
 
     w = VtkParallelFile(path, VtkPUnstructuredGrid, format=format)
