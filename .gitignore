@@ -19,3 +19,11 @@ docs/build/
 
 # distribution dir
 dist/
+
+# virtual environnement directory
+.env
+
+# Test directories
+__test__
+.pytest_cache/
+
