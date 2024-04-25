@@ -20,7 +20,8 @@ install_requires = [
 extras_require = {
     "tests": ["pytest", "vtk", "mpi4py"],
     "mpi": ["mpi4py"],
-    "doc": ["sphinx", "sphinx-rtd-theme"],
+    "doc": ["sphinx-rtd-theme"],
+    "dask": ["dask[array,delayed,distributed]"],
 }
 
 setup(
@@ -40,5 +41,6 @@ setup(
     install_requires=install_requires,
     extras_require=extras_require,
     include_package_data=True,
-    zip_safe=False,  # https://mypy.readthedocs.io/en/latest/installed_packages.html
+    zip_safe=False,
+    # https://mypy.readthedocs.io/en/latest/installed_packages.html
 )
