@@ -21,7 +21,7 @@ from py2vtk.mpi.api import (
     parallelUnstructuredGridToVTK,
 )
 
-comm = MPI.COMM_WORLD
+comm = MPI.COMM_WORLD.Dup()
 
 # Tolerance for float equality
 ATOL = 1e-15
@@ -41,7 +41,8 @@ def test_parallelImageToVTK():
     start = (0, 0, 5 * rank)
     end = (5, 5, 5 * (rank + 1))
 
-    # pointdata should be continous across processes as the boundary points are repeated
+    # pointdata should be continous across processes as the boundary points
+    # are repeated
     pointdata = np.arange(6 * 6 * (5 * size + 1))[
         6**2 * 5 * rank : 6**2 * (5 * (rank + 1) + 1)
     ]
@@ -96,7 +97,8 @@ def test_parallelRectilinearGridToVTK():
     start = (0, 0, 5 * rank)
     end = (5, 5, 5 * (rank + 1))
 
-    # pointdata should be continous across processes as the boundary points are repeated
+    # pointdata should be continous across processes as the boundary points
+    # are repeated
     pointdata = np.arange(6 * 6 * (5 * size + 1))[
         6**2 * 5 * rank : 6**2 * (5 * (rank + 1) + 1)
     ]
@@ -154,7 +156,8 @@ def test_parallelStructuredGridToVTK():
     start = (0, 0, 5 * rank)
     end = (5, 5, 5 * (rank + 1))
 
-    # pointdata should be continous across processes as the boundary points are repeated
+    # pointdata should be continous across processes as the boundary points
+    # are repeated
     pointdata = np.arange(6 * 6 * (5 * size + 1))[
         6**2 * 5 * rank : 6**2 * (5 * (rank + 1) + 1)
     ]
@@ -250,13 +253,17 @@ def test_parallelPolyDataToVTK():
         expected_cell = np.concatenate(
             [
                 np.concatenate(
-                    [np.array([0, 1, 2, 3]) + 9 * r for r in range(size)]  # Vertices
+                    # Vertices
+                    [np.array([0, 1, 2, 3]) + 9 * r for r in range(size)]
                 ),
                 np.concatenate(
-                    [np.array([4, 5, 6]) + 9 * r for r in range(size)]  # Lines
+                    # Lines
+                    [np.array([4, 5, 6]) + 9 * r for r in range(size)]
                 ),
-                np.concatenate([np.array([7]) + 9 * r for r in range(size)]),  # Polys
-                np.concatenate([np.array([8]) + 9 * r for r in range(size)]),  # Strips
+                # Polys
+                np.concatenate([np.array([7]) + 9 * r for r in range(size)]),
+                # Strips
+                np.concatenate([np.array([8]) + 9 * r for r in range(size)]),
             ]
         )
         expected_point = np.arange(8 * size)

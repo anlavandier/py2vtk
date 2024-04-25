@@ -25,10 +25,10 @@ from py2vtk.api import (
     polyDataToVTK,
     polyLinesToVTK,
     unstructuredGridToVTK,
-    writeParallelVTKImageData,
 )
 from py2vtk.api.parallel import (
     writeParallelVTKGrid,
+    writeParallelVTKImageData,
     writeParallelVTKPolyData,
     writeParallelVTKUnstructuredGrid,
 )

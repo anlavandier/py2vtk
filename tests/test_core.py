@@ -12,7 +12,7 @@ from vtkmodules.vtkIOXML import (
 )
 
 from py2vtk.core.vtkcells import VtkLine, VtkPolyLine, VtkTriangle, VtkVertex
-from py2vtk.core.vtkfiles import (
+from py2vtk.core.xml.vtkfiles import (
     VtkFile,
     VtkImageData,
     VtkPolyData,
