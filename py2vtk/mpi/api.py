@@ -10,7 +10,7 @@ from ..api.parallel import (
     writeParallelVTKUnstructuredGrid,
 )
 from ..api.serial import gridToVTK, imageToVTK, polyDataToVTK, unstructuredGridToVTK
-from ..utilities.utils import get_data_info
+from ..core.xml.utils import get_data_info
 
 __all__ = [
     "parallelImageToVTK",
@@ -84,13 +84,15 @@ def parallelImageToVTK(
     ----------
 
     path : str
-        name of the file without extension  or rank specific numbering where data should be saved.
-        Each rank will produce a file named ``filename + f".{rank}.vti"``. Rank 0 will
-        also produce a parallel VTI file named ``filename.pvti``.
+        name of the file without extension  or rank specific numbering where data
+        should be saved. Each rank will produce a file named
+        ``filename + f".{rank}.vti"``. Rank 0 will also produce a parallel VTI file
+        named ``filename.pvti``.
 
     starts : dict or tuple
         If ``starts`` is a dictionnary, it should map each rank to its start.
-        If ``starts`` is a tuple, then it is assumed to be the start of the current rank.
+        If ``starts`` is a tuple, then it is assumed to be the start of
+        the current rank.
 
     ends : dict or tuple, optional
         If ``ends`` is a dictionnary, it should map each rank to its end.
@@ -258,22 +260,24 @@ def parallelRectilinearGridToVTK(
     ----------
 
     path : str
-        name of the file without extension  or rank specific numbering where data should be saved.
-        Each rank will produce a file named ``filename + f".{rank}.vtr"``. Rank 0 will
-        also produce a parallel VTI file named ``filename.pvtr``.
+        name of the file without extension  or rank specific numbering where data
+        should be saved. Each rank will produce a file named
+        ``filename + f".{rank}.vtr"``. Rank 0 will also produce a parallel VTI file
+        named ``filename.pvtr``.
 
     x : array-like
-        x coordinates of the points..
+        x coordinates of the points.
 
     y : array-like
-        y coordinates of the points..
+        y coordinates of the points.
 
     z : array-like
-        z coordinates of the points..
+        z coordinates of the points.
 
     starts : dict or tuple
         If ``starts`` is a dictionnary, it should map each rank to its start.
-        If ``starts`` is a tuple, then it is assumed to be the start of the current rank.
+        If ``starts`` is a tuple, then it is assumed to be the start
+        of the current rank.
 
     ends : dict or tuple, optional
         If ``ends`` is a dictionnary, it should map each rank to its end.
@@ -335,7 +339,8 @@ def parallelRectilinearGridToVTK(
     if x.ndim == y.ndim == z.ndim == 3:
         raise ValueError(
             "x, y and z should be 1D arrays for the VTK Rectlinear Grid format.\n"
-            "If x, y and z are meant to be 3D then 'parallelStructuredGridToVTK should be used instead."
+            "If x, y and z are meant to be 3D then 'parallelStructuredGridToVTK"
+            " should be used instead."
         )
 
     rank = comm.Get_rank()
@@ -439,22 +444,24 @@ def parallelStructuredGridToVTK(
     ----------
 
     path : str
-        name of the file without extension  or rank specific numbering where data should be saved.
-        Each rank will produce a file named ``filename + f".{rank}.vts"``. Rank 0 will
-        also produce a parallel VTI file named ``filename.pvts``.
+        name of the file without extension  or rank specific numbering where data
+        should be saved. Each rank will produce a file named
+        ``filename + f".{rank}.vts"``. Rank 0 will also produce a parallel VTI file
+        named ``filename.pvts``.
 
     x : array-like
-        x coordinates of the points..
+        x coordinates of the points.
 
     y : array-like
-        y coordinates of the points..
+        y coordinates of the points.
 
     z : array-like
-        z coordinates of the points..
+        z coordinates of the points.
 
     starts : dict or tuple
         If ``starts`` is a dictionnary, it should map each rank to its start.
-        If ``starts`` is a tuple, then it is assumed to be the start of the current rank.
+        If ``starts`` is a tuple, then it is assumed to be the start
+        of the current rank.
 
     ends : dict or tuple, optional
         If ``ends`` is a dictionnary, it should map each rank to its end.
@@ -516,7 +523,8 @@ def parallelStructuredGridToVTK(
     if x.ndim == y.ndim == z.ndim == 1:
         raise ValueError(
             "x, y and z should be 3D arrays for the VTK Structured Grid format.\n"
-            "If x, y and z are meant to be 1D then 'parallelRectilinearGridToVTK should be used instead."
+            "If x, y and z are meant to be 1D then 'parallelRectilinearGridToVTK"
+            " should be used instead."
         )
 
     rank = comm.Get_rank()
@@ -639,22 +647,22 @@ def parallelPolyDataToVTK(
         If a 2-tuple or array-likes, should be (connectivity, offsets)
         where connectivity should defines the points associated to each line and
         offsets should define the index of the last point in each cell (here line).
-        If a list of array-likes, each element in the list should define the points associated
-        to each line.
+        If a list of array-likes, each element in the list should define the points
+        associated to each line.
 
     strips : 2-tuple of array-likes or list of array-likes or None, optional
         If a 2-tuple or array-likes, should be (connectivity, offsets)
         where connectivity should defines the points associated to each strip and
         offsets should define the index of the last point in each cell (here strip).
-        If a list of array-likes, each element in the list should define the points associated
-        to each strip.
+        If a list of array-likes, each element in the list should define the points
+        associated to each strip.
 
     polys : 2-tuple of array-likes or list of array-likes or None, optional
         If a 2-tuple or array-likes, should be (connectivity, offsets)
         where connectivity should defines the points associated to each polygon and
         offsets should define the index of the last point in each cell (here polygon).
-        If a list of array-likes, each element in the list should define the points associated
-        to each polygon.
+        If a list of array-likes, each element in the list should define the points
+        associated to each polygon.
 
     cellData : dict or 4-tuple of dicts, optional
         dictionary containing cell centered data or tuple of 4 dictionaries,
@@ -710,11 +718,13 @@ def parallelPolyDataToVTK(
     -----
 
     While Vtk PolyData does support cell-centered data, the way it does is not
-    intuitive as the cell are numbered globally across each cell type and ordered in the following way:
-    verts, lines, polys and strips. On top of that, for what is still a mistery to me, cell data written in base64
-    is read improperly (despite being written properly) and shows wrong results in paraview and when read using the
-    python vtk library. For this reason, when provided with cell-centered data, this function will enforce 'raw'
-    as the appended format and 'ascii' as the direct format.
+    intuitive as the cell are numbered globally across each cell type and ordered
+    in the following way: verts, lines, polys and strips.
+    On top of that, for what is still a mistery to me, cell data written in base64 is
+    read improperly (despite being written properly) and shows wrong results
+    in paraview and when read using the python vtk library.
+    For this reason, when provided with cell-centered data, this function
+    will enforce 'raw' as the appended format and 'ascii' as the direct format.
 
     """
     rank = comm.Get_rank()
@@ -785,9 +795,10 @@ def parallelUnstructuredGridToVTK(
     ----------
 
     path : str
-        name of the file without extension  or rank specific numbering where data should be saved.
-        Each rank will produce a file named ``filename + f".{rank}.vtu"``. Rank 0 will
-        also produce a parallel VTU file named ``filename.pvtu``.
+        name of the file without extension  or rank specific numbering where data
+        should be saved. Each rank will produce a file named
+        ``filename + f".{rank}.vtu"``. Rank 0 will also produce a parallel VTU file
+        named ``filename.pvtu``.
 
     x : array-like
         x coordinates of the vertices.
@@ -813,18 +824,21 @@ def parallelUnstructuredGridToVTK(
         1D array with an integer that defines the cell type of
         each element in the grid.
         It should have size nelem.
-        This should be filed using py2vtk.core.vtkcells.VtkXXXX.tid, where XXXX represent
-        the type of cell.
-        Please check the VTK file format specification or py2vtk.core.vtkcells.py for allowed cell types.
+        This should be filed using py2vtk.core.vtkcells.VtkXXXX.tid, where XXXX
+        represent the type of cell.
+        Please check the VTK file format specification or py2vtk.core.vtkcells.py
+        for allowed cell types.
 
     faces : array_like or None, optional
         1D integer array describing the faces of polyhedric cells.
         This is only required and used if there are polyhedra in the grid (cell id 42).
-        When used it is expected to be formatted in the following way for each polyhedron:
-        Number of faces, Number of points in face 0, first point of face 0, ... and so on.
+        When used it is expected to be formatted in the following way for
+        each polyhedron: Number of faces, Number of points in face 0,
+        first point of face 0, ... and so on.
 
     faceoffsets : array_like or None, optional
-        1D integer array with the index of the last vertex of each polyhedron in the faces array.
+        1D integer array with the index of the last vertex of each polyhedron in the
+        faces array.
 
     cellData : dict, optional
         dictionary with variables associated to each cell.
