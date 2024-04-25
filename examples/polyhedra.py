@@ -61,7 +61,7 @@ faces = np.array(
         9,
         10,
         14,
-        13,
+        13,  # Face 1 preceded by its number of points
         4,
         9,
         11,
@@ -100,7 +100,9 @@ faces = np.array(
         11,
     ]
 )
-faceoffsets = np.array([1 + 25 + 16, len(faces)])
+#                       1 + (1 + number of points 1st face type) * number of faces of first face type
+#                         + (1 + number of points 2nd face type) * number of faces of second face type
+faceoffsets = np.array([1 + (1 + 4) * 5 + (1 + 3) * 4, len(faces)])
 cell_types = np.array([VtkPolyhedron.tid] * 2)
 celldata = {"cell_num": np.array([1, 2])}
 pointdata = {"points": np.random.random(size=18)}
